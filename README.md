@@ -6,11 +6,11 @@
 
 ##  2、在线地址
 
-- 项目链接：[www.talkxj.com](https://www.talkxj.com/)
-- 后台链接：[admin.talkxj.com](https://admin.talkxj.com/)
-- 测试账号：[test@qq.com](mailto:test@qq.com)，密码：1234567
-- Github地址：https://github.com/X1192176811/blog
-- 在线接口文档地址： https://www.talkxj.com/api/doc.html
+- 项目链接：即将更新
+- 后台链接：即将更新
+- 测试账号：即将将更新
+- Github地址：https://github.com/Czh2000/Blog
+- 在线接口文档地址：即将更新
 
 ##  3、目录结构
 
@@ -116,4 +116,4 @@ blog-springboot
 
 ##  10、项目总结
 
-​	博客作为新手入门项目是十分不错的，项目所用的技术栈覆盖的也比较广，适合初学者学习。主要难点在于权限管理、第三方登录、websocket这块。做的不好的地方请大家见谅，有问题的或者有好的建议可以私聊联系我。
+  在慢慢总结完善，敬请期待。
