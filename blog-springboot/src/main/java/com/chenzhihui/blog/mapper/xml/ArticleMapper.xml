@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chenzhihui.blog.mapper.ArticleMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.chenzhihui.blog.pojo.Article">
+        <id column="article_id" property="articleId" />
+        <result column="user_id" property="userId" />
+        <result column="category_id" property="categoryId" />
+        <result column="article_cover" property="articleCover" />
+        <result column="article_title" property="articleTitle" />
+        <result column="article_content" property="articleContent" />
+        <result column="type" property="type" />
+        <result column="original_url" property="originalUrl" />
+        <result column="is_top" property="isTop" />
+        <result column="is_delete" property="isDelete" />
+        <result column="status" property="status" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        article_id, user_id, category_id, article_cover, article_title, article_content, type, original_url, is_top, is_delete, status, create_time, update_time
+    </sql>
+
+    <!--
+    查询推荐文章
+        1、select distinct是用来返回查询结果中article_id不重复的多表结构中的信息
+        2、该sql语句是先通过articleId查询该文章的tag_id，然后在表article_tag中查询tag_id相同，但是article不同的文章作为表t2
+        3、将t2与article表a通过article_id进行连接，条件是没有被删除，按照置顶、id降序排序，返回前六条
+    -->
+    <select id="listRecommendArticles" resultType="com.chenzhihui.blog.dto.ArticleRecommendDTO">
+        select
+            id,article_title,article_cover,create_time
+        from
+            (
+                select distinct
+                    article_id
+                from
+                    (select tag_id from article_tag where article_id = #{artcileId})t
+                    join article_tag t1
+                    on t.tag_id = t1.tag_id
+                    where article_id != #{artcileId}
+            )t2
+            join article a
+            on t2.article_id = a.id
+            where a.is_delete = 0
+            order by is_top desc ,id desc
+            limit 6
+    </select>
+
+    <!--
+    通过article查找文章信息
+        1、查找文章信息，需要与目录表、文章标签、标签表进行连接，表连接是为了查找如标签名、目录名
+        2、查找条件是articleId，并且没有被删除，状态是存在
+        注：articleResultMap ->
+    -->
+    <select id="getArticleById" resultMap="articleResultMap">
+        select
+            a.id,article_cover,article_title,article_content,a.type,a.original_url,a.create_time,a.update_time,
+            a.category_id,category_name,t.id as tag_id,t.tag_name
+        from
+            article a
+        join category c on a.category_id = c.id
+        join article_tag atg on a.id = atg.article_id
+        join tag t on t.id = atg.tag_id
+        where
+            a.id = #{articleId}
+        and a.is_delete = 0
+        and a.status = 1
+    </select>
+
+
+
+
+
+</mapper>
