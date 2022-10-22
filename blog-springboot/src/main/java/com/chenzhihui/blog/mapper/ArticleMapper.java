@@ -6,6 +6,7 @@ import com.chenzhihui.blog.dto.ArticleRecommendDTO;
 import com.chenzhihui.blog.pojo.Article;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.chenzhihui.blog.vo.ConditionVO;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;

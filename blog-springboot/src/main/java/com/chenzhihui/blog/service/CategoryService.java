@@ -1,7 +1,9 @@
 package com.chenzhihui.blog.service;
 
+import com.chenzhihui.blog.dto.CategoryDTO;
 import com.chenzhihui.blog.pojo.Category;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.chenzhihui.blog.vo.PageResult;
 
 /**
  * <p>
@@ -13,4 +15,5 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface CategoryService extends IService<Category> {
 
+    PageResult<CategoryDTO> listCategories();
 }

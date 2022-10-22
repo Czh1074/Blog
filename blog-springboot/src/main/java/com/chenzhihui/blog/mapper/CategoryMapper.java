@@ -1,7 +1,11 @@
 package com.chenzhihui.blog.mapper;
 
+import com.chenzhihui.blog.dto.CategoryDTO;
 import com.chenzhihui.blog.pojo.Category;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
 
 /**
  * <p>
@@ -13,4 +17,5 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  */
 public interface CategoryMapper extends BaseMapper<Category> {
 
+    List<CategoryDTO> listCategoryDTO();
 }

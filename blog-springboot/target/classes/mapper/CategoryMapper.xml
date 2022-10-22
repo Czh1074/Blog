@@ -15,4 +15,12 @@
         category_id, category_name, create_time, update_time
     </sql>
 
+    <select id="listCategoryDTO" resultType="com.chenzhihui.blog.dto.CategoryDTO">
+        select c.category_id,c.category_name, count(a.article_id) as article_count
+        from category c
+        left join( select article_id,category_id from article where is_delete = 0 and `status` = 1) a
+        on c.category_id = a.category_id
+        group by c.category_id
+    </select>
+
 </mapper>
