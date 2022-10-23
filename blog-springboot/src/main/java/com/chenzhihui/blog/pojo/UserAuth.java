@@ -1,13 +1,11 @@
 package com.chenzhihui.blog.pojo;
 
-import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.*;
+
 import java.util.Date;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+
+import lombok.*;
 import lombok.experimental.Accessors;
 
 /**
@@ -19,9 +17,11 @@ import lombok.experimental.Accessors;
  * @since 2022-10-19
  */
 @Data
-@EqualsAndHashCode(callSuper = false)
-@Accessors(chain = true)
-public class UserAuth implements Serializable {
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@TableName("user_auth")
+public class UserAuth{
 
     private static final long serialVersionUID = 1L;
 
@@ -46,7 +46,7 @@ public class UserAuth implements Serializable {
     /**
      * 登录类型
      */
-    private Boolean loginType;
+    private Integer loginType;
 
     /**
      * 用户登录ip

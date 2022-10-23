@@ -2,6 +2,7 @@ package com.chenzhihui.blog.service;
 
 import com.chenzhihui.blog.dto.BlogHomeInfoDTO;
 import com.chenzhihui.blog.vo.Result;
+import com.chenzhihui.blog.vo.WebsiteConfigVO;
 
 /**
  * 博客信息服务
@@ -30,4 +31,6 @@ public interface BlogInfoService {
      * 3、上传访客信息
      */
     void report();
+
+    WebsiteConfigVO getWebsiteConfig();
 }
