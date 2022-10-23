@@ -18,9 +18,9 @@ import lombok.NoArgsConstructor;
 public class ArticlePaginationDTO {
 
     /**
-     * id
+     * articleId
      */
-    private Integer id;
+    private Integer articleId;
 
     /**
      * 文章缩略图

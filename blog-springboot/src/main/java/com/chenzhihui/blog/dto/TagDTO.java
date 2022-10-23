@@ -20,7 +20,7 @@ public class TagDTO {
     /**
      * id
      */
-    private Integer id;
+    private Integer tagId;
 
     /**
      * 标签名

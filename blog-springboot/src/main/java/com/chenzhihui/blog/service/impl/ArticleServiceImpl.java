@@ -113,17 +113,17 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         queryWrapperLast.lt("article_id",articleId);
         queryWrapperLast.orderByDesc("article_id");
         queryWrapperLast.last("limit 1");
-        //查询下一篇文章
         Article lastArticle = articleMapper.selectOne(queryWrapperLast);
+        article.setLastArticle(BeanCopyUtils.copyObject(lastArticle, ArticlePaginationDTO.class));
+        //查询下一篇文章
         QueryWrapper<Article> queryWrapperNext = new QueryWrapper<>();
         queryWrapperNext.select("article_id","article_title","article_cover");
         queryWrapperNext.eq("is_delete",FALSE);
         queryWrapperNext.eq("status",PUBLIC.getStatus());
-        queryWrapperNext.gt("article",articleId);
+        queryWrapperNext.gt("article_id",articleId);
         queryWrapperNext.orderByDesc("article_id");
         queryWrapperNext.last("limit 1");
-        Article nextArticle = articleMapper.selectOne(queryWrapperLast);
-        article.setLastArticle(BeanCopyUtils.copyObject(lastArticle, ArticlePaginationDTO.class));
+        Article nextArticle = articleMapper.selectOne(queryWrapperNext);
         article.setNextArticle(BeanCopyUtils.copyObject(nextArticle, ArticlePaginationDTO.class));
         // todo：封装点赞量和浏览量
         //封装文章信息

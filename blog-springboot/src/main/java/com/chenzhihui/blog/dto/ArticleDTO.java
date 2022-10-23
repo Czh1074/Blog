@@ -23,7 +23,7 @@ public class ArticleDTO {
     /**
      * id
      */
-    private Integer id;
+    private Integer articleId;
 
     /**
      * 文章缩略图

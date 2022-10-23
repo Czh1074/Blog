@@ -19,4 +19,20 @@
         talk_id, user_id, content, images, is_top, status, create_time, update_time
     </sql>
 
+    <select id="listTalks" resultType="com.chenzhihui.blog.dto.TalkDTO">
+        select t.talk_id,ui.nickname,ui.avatar,t.content,t.images,t.is_top,t.create_time
+        from talk t
+        join user_info ui on t.user_id = ui.user_info_id
+        where t.status = 1
+        order by t.is_top desc,t.talk_id desc
+        limit #{limitCurrent},#{size}
+    </select>
+
+    <select id="getTalkById" resultType="com.chenzhihui.blog.dto.TalkDTO" parameterType="Integer">
+        select t.talk_id,ui.nickname,ui.avatar,t.content,t.images,t.is_top,t.create_time
+        from talk t
+        join user_info ui on t.user_id = ui.user_info_id
+        where t.status = 1 and t.talk_id = #{talkId}
+    </select>
+
 </mapper>

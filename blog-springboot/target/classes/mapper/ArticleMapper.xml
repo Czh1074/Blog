@@ -38,7 +38,7 @@
                 select distinct
                     article_id
                 from
-                    (select tag_id from article_tag where article_id = #{articleId})t
+                    (select tag_id from article_tag where article_id = #{articleId}) t
                     join article_tag t1
                     on t.tag_id = t1.tag_id
                     where article_id != #{articleId}
