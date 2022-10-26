@@ -26,7 +26,7 @@ public class ConditionVO {
      * 页码
      */
     @ApiModelProperty(name = "current", value = "页码", dataType = "Long")
-    private Long current;
+    private Long limitCurrent;
 
     /**
      * 条数

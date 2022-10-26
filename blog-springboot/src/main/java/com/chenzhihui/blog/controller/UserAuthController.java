@@ -21,7 +21,7 @@ import javax.validation.Valid;
  * @since 2022-10-19
  */
 @RestController
-@RequestMapping("/userAuth")
+//@RequestMapping("/userAuth")
 public class UserAuthController {
 
     @Autowired
@@ -37,7 +37,7 @@ public class UserAuthController {
     @AccessLimit(seconds = 60, maxCount = 1)
     @ApiOperation(value = "发送邮箱验证码")
     @ApiImplicitParam(name = "username", value = "用户名", required = true, dataType = "String")
-    @GetMapping("/code/{username}")
+    @GetMapping("/userAuth/code/{username}")
     public Result<?> sendCode(@PathVariable("username") String username) {
         userAuthService.sendCode(username);
         return Result.ok();
@@ -51,7 +51,7 @@ public class UserAuthController {
      * @return {@link Result<>}
      */
     @ApiOperation(value = "用户注册")
-    @PostMapping("/register")
+    @PostMapping("/userAuth/register")
     public Result<?> register(@Valid @RequestBody UserVO user) {
         userAuthService.register(user);
         return Result.ok();
@@ -65,10 +65,12 @@ public class UserAuthController {
      * @return {@link Result<>}
      */
     @ApiOperation(value = "修改密码")
-    @PutMapping("/password")
+    @PutMapping("/userAuth/password")
     public Result<?> updatePassword(@Valid @RequestBody UserVO user) {
         userAuthService.updatePassword(user);
         return Result.ok();
     }
+
+
 }
 

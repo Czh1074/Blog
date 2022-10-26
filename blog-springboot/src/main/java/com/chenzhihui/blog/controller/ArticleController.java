@@ -26,7 +26,6 @@ import java.util.List;
  * @since 2022-10-19
  */
 @RestController
-@RequestMapping("/articles")
 public class ArticleController {
 
     @Autowired // 将创建好的容器bean取过来，赋予其成员变量的属性
@@ -38,7 +37,7 @@ public class ArticleController {
      * @return {@link Result < ArchiveDTO >} 文章归档列表
      */
     @ApiOperation(value = "查看文章归档")
-    @GetMapping("/archives")
+    @GetMapping("/articles/archives")
     public Result<PageResult<ArchiveDTO>> listArchives() {
         return Result.ok(articleService.listArchives());
     }
@@ -50,7 +49,7 @@ public class ArticleController {
      * @return {@link Result< Article >} 所有文章列表
      */
     @ApiOperation(value = "查看所有文章")
-    @GetMapping("/articles")
+    @GetMapping("/articles/articles")
     public Result<List<Article>> listArticles() {
         return Result.ok(articleService.listArticles());
     }
@@ -64,20 +63,22 @@ public class ArticleController {
      * */
     @ApiOperation(value = "根据id查看文章")
     @ApiImplicitParam(name = "articleId",value = "文章id",required = true,dataType = "Integer")
-    @GetMapping("/getArticleById/{articleId}")
+    @GetMapping("/articles/{articleId}")
     public Result<ArticleDTO> getArticleById(@PathVariable("articleId") Integer articleId){
         return Result.ok(articleService.getArticleById(articleId));
     }
 
+
     /**
-     * 4、根据条件查询文章 -> 主要运用在发现里的分类和标签这两个按钮，点击具体的类别进行文章列表的查找
+     * 4、根据条件查询文章 -> 主要运用在发现里的标签这个按钮，点击具体的标签进行文章列表的查找
      *
      * @param condition 条件
      * @return {@link Result<ArticlePreviewListDTO>} 文章列表
      */
     @ApiOperation(value = "根据条件查询文章")
-    @GetMapping("/findByCondition")
+    @GetMapping("/articles/findByCondition")
     public Result<ArticlePreviewListDTO> listArticlesByCondition(ConditionVO condition) {
+        System.out.println("输出current" + condition.getLimitCurrent());
         return Result.ok(articleService.listArticlesByCondition(condition));
     }
 
@@ -88,7 +89,7 @@ public class ArticleController {
      * @return {@link Result<ArticleSearchDTO>} 文章列表
      */
     @ApiOperation(value = "搜索文章")
-    @GetMapping("/search")
+    @GetMapping("/articles/search")
     public Result<List<ArticleSearchDTO>> listArticlesBySearch(ConditionVO condition) {
         return Result.ok(articleService.listArticlesBySearch(condition));
     }
@@ -101,7 +102,7 @@ public class ArticleController {
      */
     @ApiOperation(value = "点赞文章")
     @ApiImplicitParam(name = "articleId", value = "文章id", required = true, dataType = "Integer")
-    @PostMapping("/{articleId}/like")
+    @PostMapping("/articles/{articleId}/like")
     public Result<?> saveArticleLike(@PathVariable("articleId") Integer articleId) {
         articleService.saveArticleLike(articleId);
         return Result.ok();

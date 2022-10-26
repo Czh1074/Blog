@@ -15,4 +15,14 @@
         tag_id, tag_name, create_time, update_time
     </sql>
 
+    <select id="getTagListById" parameterType="Integer" resultType="com.chenzhihui.blog.pojo.Tag">
+        select a.tag_id, a.tag_name
+        from ( select article_id,t.tag_id,tag_name
+               from article_tag atg
+               join tag t
+               on t.tag_id = atg.tag_id) a
+        where a.article_id = #{articleId}
+    </select>
+
+
 </mapper>

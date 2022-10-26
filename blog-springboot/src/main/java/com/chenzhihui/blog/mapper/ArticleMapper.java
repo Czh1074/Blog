@@ -37,6 +37,7 @@ public interface ArticleMapper extends BaseMapper<Article> {
      */
     ArticleDTO getArticleById(Integer articleId);
 
+
     /**
      * 通过condition查找文章
      *

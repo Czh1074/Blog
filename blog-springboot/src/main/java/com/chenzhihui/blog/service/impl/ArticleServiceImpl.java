@@ -153,16 +153,26 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 //        }
 //    }
 
+
     /**
-     * 4、根据条件查询文章列表
+     * 4、根据类别条件查询文章列表
      *
      * @param condition 文章列表
      * @return {@link ArticlePreviewListDTO} 文章信息
      */
     @Override
     public ArticlePreviewListDTO listArticlesByCondition(ConditionVO condition) {
-        //查询文章
-        List<ArticlePreviewDTO> articlePreviewDTOList = articleMapper.listArticlesByCondition(PageUtils.getLimitCurrent(),PageUtils.getSize(),condition);
+        // 查询文章
+        // 对查询过程中使用对current进行调整，设置为传值的current
+        Long current = condition.getLimitCurrent();
+        List<ArticlePreviewDTO> articlePreviewDTOList = articleMapper.listArticlesByCondition((current-1)*10, 9L,condition);
+        System.out.println("输出查找长度" + articlePreviewDTOList.size());
+        // 将对应对articleId与List<TagDTO>对应起来
+        for(int i=0; i<articlePreviewDTOList.size(); i++){
+            List<Tag> tagList = tagMapper.getTagListById(articlePreviewDTOList.get(i).getArticleId());
+            List<TagDTO> tagDTOList = BeanCopyUtils.copyList(tagList,TagDTO.class);
+            articlePreviewDTOList.get(i).setTagDTOList(tagDTOList);
+        }
         // 搜索条件对应名（标签或分类名）
         String name;
         if(Objects.nonNull(condition.getCategoryId())){
@@ -172,8 +182,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             name = tagMapper.selectOne(new LambdaQueryWrapper<Tag>().select(Tag::getTagName)
                     .eq(Tag::getTagId,condition.getTagId())).getTagName();
         }
-        return ArticlePreviewListDTO.builder().articlePreviewDTOList(articlePreviewDTOList).build();
+        return ArticlePreviewListDTO.builder().articlePreviewDTOList(articlePreviewDTOList).name(name).build();
     }
+
 
     /**
      * 5、搜索文章

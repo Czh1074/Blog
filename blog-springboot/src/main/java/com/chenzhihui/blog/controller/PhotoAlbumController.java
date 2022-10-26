@@ -22,7 +22,7 @@ import java.util.List;
  * @since 2022-10-19
  */
 @RestController
-@RequestMapping("/photoAlbum")
+//@RequestMapping("/photoAlbum")
 public class PhotoAlbumController {
 
     @Autowired
@@ -34,7 +34,7 @@ public class PhotoAlbumController {
      *
      * @return {@link List<PhotoAlbumDTO>} 相册列表
      * */
-    @GetMapping("/listPhotoAlbum")
+    @GetMapping("/photoAlbum/listPhotoAlbum")
     public Result<List<PhotoAlbumDTO>> listPhotoAlbum(){
         return Result.ok(photoAlbumService.listPhotoAlbum());
     }

@@ -3,6 +3,7 @@ package com.chenzhihui.blog.controller;
 
 import com.chenzhihui.blog.dto.TagDTO;
 import com.chenzhihui.blog.service.TagService;
+import com.chenzhihui.blog.vo.PageResult;
 import com.chenzhihui.blog.vo.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,7 +22,7 @@ import java.util.List;
  * @since 2022-10-19
  */
 @RestController
-@RequestMapping("/tag")
+//@RequestMapping("/tag")
 public class TagController {
 
     @Autowired
@@ -33,8 +34,8 @@ public class TagController {
      *
      * @return {@link TagDTO} 标签列表
      * */
-    @GetMapping("/listTags")
-    public Result<List<TagDTO>> listTags(){
+    @GetMapping("/tags/listTags")
+    public Result<PageResult<TagDTO>> listTags(){
         return Result.ok(tagService.listTags());
     }
 

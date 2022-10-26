@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @since 2022-10-19
  */
 @RestController
-@RequestMapping("/photo")
+//@RequestMapping("/photo")
 public class PhotoController {
 
     @Autowired
@@ -34,7 +34,7 @@ public class PhotoController {
      * @return {@link Result<PhotoDTO>} 照片列表
      */
     @ApiOperation(value = "根据相册id查看照片列表")
-    @GetMapping("/listPhotosByAlbumId/{albumId}")
+    @GetMapping("/photo/listPhotosByAlbumId/{albumId}")
     public Result<PhotoDTO> listPhotosByAlbumId(@PathVariable("albumId") Integer albumId) {
         return Result.ok(photoService.listPhotosByAlbumId(albumId));
     }

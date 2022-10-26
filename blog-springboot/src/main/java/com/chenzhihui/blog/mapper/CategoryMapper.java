@@ -1,5 +1,6 @@
 package com.chenzhihui.blog.mapper;
 
+import com.chenzhihui.blog.dto.ArticleDTO;
 import com.chenzhihui.blog.dto.CategoryDTO;
 import com.chenzhihui.blog.pojo.Category;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -18,4 +19,5 @@ import java.util.List;
 public interface CategoryMapper extends BaseMapper<Category> {
 
     List<CategoryDTO> listCategoryDTO();
+
 }

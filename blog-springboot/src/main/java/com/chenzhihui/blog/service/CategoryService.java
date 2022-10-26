@@ -1,9 +1,11 @@
 package com.chenzhihui.blog.service;
 
+import com.chenzhihui.blog.dto.ArticleDTO;
 import com.chenzhihui.blog.dto.CategoryDTO;
 import com.chenzhihui.blog.pojo.Category;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.chenzhihui.blog.vo.PageResult;
+import com.chenzhihui.blog.vo.Result;
 
 /**
  * <p>
@@ -15,5 +17,11 @@ import com.chenzhihui.blog.vo.PageResult;
  */
 public interface CategoryService extends IService<Category> {
 
+    /**
+     * 查看分类列表
+     *
+     * @return {@link Result<CategoryDTO>} 分类列表
+     */
     PageResult<CategoryDTO> listCategories();
+
 }

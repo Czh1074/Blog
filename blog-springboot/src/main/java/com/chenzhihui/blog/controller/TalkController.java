@@ -25,7 +25,7 @@ import java.util.List;
  * @since 2022-10-19
  */
 @RestController
-@RequestMapping("/talk")
+//@RequestMapping("/talk")
 public class TalkController {
 
     @Autowired
@@ -39,7 +39,7 @@ public class TalkController {
      * @return {@link Result<String>}
      */
     @ApiOperation(value = "查看首页说说")
-    @GetMapping("/homeTalks")
+    @GetMapping("/talk/homeTalks")
     public Result<List<String>> listHomeTalks() {
         return Result.ok(talkService.listHomeTalks());
     }
@@ -50,7 +50,7 @@ public class TalkController {
      * @return {@link Result<TalkDTO>}
      */
     @ApiOperation(value = "查看说说列表")
-    @GetMapping("/listTalks")
+    @GetMapping("/talk/listTalks")
     public Result<PageResult<TalkDTO>> listTalks() {
         return Result.ok(talkService.listTalks());
     }
@@ -62,7 +62,7 @@ public class TalkController {
      * @return {@link TalkDTO}
      */
     @ApiOperation(value = "通过talk_id查看说说详情")
-    @GetMapping("/getTalkById/{talkId}")
+    @GetMapping("/talk/getTalkById/{talkId}")
     public Result<TalkDTO> getTalkById(@PathVariable("talkId") Integer talkId){
         return Result.ok(talkService.getTalkById(talkId));
     }

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 /**
  * 推荐文章
@@ -37,6 +38,6 @@ public class ArticleRecommendDTO {
     /**
      * 创建时间
      */
-    private Data createTime;
+    private Date createTime;
 
 }

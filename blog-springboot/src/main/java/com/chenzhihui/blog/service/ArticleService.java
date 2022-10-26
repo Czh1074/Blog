@@ -45,13 +45,12 @@ public interface ArticleService extends IService<Article> {
     ArticleDTO getArticleById(Integer articleId);
 
     /**
-     * 4、根据条件查询文章列表
+     * 4、根据标签条件查询文章列表
      *
      * @param condition 文章列表
      * @return {@link ArticlePreviewListDTO} 文章信息
      */
     ArticlePreviewListDTO listArticlesByCondition(ConditionVO condition);
-
 
     /**
      * 5、搜索文章
@@ -68,4 +67,5 @@ public interface ArticleService extends IService<Article> {
      * @return {@link Result<>}
      */
     void saveArticleLike(Integer articleId);
+
 }

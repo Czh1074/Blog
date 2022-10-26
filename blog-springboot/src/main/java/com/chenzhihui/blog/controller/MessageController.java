@@ -22,7 +22,7 @@ import java.util.List;
  * @since 2022-10-19
  */
 @RestController
-@RequestMapping("/message")
+//@RequestMapping("/message")
 public class MessageController {
 
     @Autowired
@@ -33,7 +33,7 @@ public class MessageController {
      *
      * @return {@link List<MessageDTO>} 留言列表
      * */
-    @GetMapping("/listMessage")
+    @GetMapping("/message/listMessage")
     public Result<List<MessageDTO>> listMessage(){
         return Result.ok(messageService.listMessage());
     }
@@ -47,7 +47,7 @@ public class MessageController {
      */
     @AccessLimit(seconds = 60, maxCount = 1) //
     @ApiOperation(value = "添加留言")
-    @PostMapping("/messages")
+    @PostMapping("/message/messages")
     public Result<?> saveMessage(@Valid @RequestBody MessageVO messageVO) {
         messageService.saveMessage(messageVO);
         return Result.ok();

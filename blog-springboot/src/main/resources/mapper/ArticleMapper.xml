@@ -32,7 +32,7 @@
     -->
     <select id="listRecommendArticles" resultType="com.chenzhihui.blog.dto.ArticleRecommendDTO">
         select
-            a.article_id,article_title,article_cover,create_time
+            a.article_id,article_title,a.article_cover,a.create_time
         from
             (
                 select distinct
@@ -59,12 +59,10 @@
     <select id="getArticleById" resultType="com.chenzhihui.blog.dto.ArticleDTO">
         select
             a.article_id,article_cover,article_title,article_content,a.type,a.original_url,a.create_time,a.update_time,
-            a.category_id,category_name,t.tag_id as tag_id,t.tag_name
+            a.category_id,category_name
         from
             article a
         join category c on a.category_id = c.category_id
-        join article_tag atg on a.article_id = atg.article_id
-        join tag t on t.tag_id = atg.tag_id
         where
             a.article_id = #{articleId}
         and a.is_delete = 0
@@ -73,31 +71,29 @@
 
     <!--
     条件查询
-        1、
+        1、根据类别查找文章列表
     -->
     <select id="listArticlesByCondition" resultType="com.chenzhihui.blog.dto.ArticlePreviewDTO">
         select
-            a.article_id,article_cover,article_title,a.create_time,a.category_id,category_name,t.tag_id as tag_id,t.tag_name
+        distinct a.article_id,article_cover,article_title,a.create_time,a.category_id,category_name
         from
-            (
-                select article_id,article_cover,article_title,article_content,create_time,category_id
-                from article
-                <where>
-                    <if test="condition.categoryId != null">
-                        category_id = #{condition.categoryId}
-                    </if>
-                    <if test="condition.tagId != null">
-                        article_id in (select article_id from article_tag where tag_id = #{condition.tagId})
-                    </if>
-                </where>
-                and is_delete = 0
-                and status = 1
-                order by article_id desc
-                limit #{limitCurrent},#{size}
-                ) a
-                join category c on a.category_id = c.category_id
-                join article_tag atg ON a.article_id = atg.article_id
-                join tag t on  t.tag_id = atg.tag_id
+        (
+        select article_id,article_cover,article_title,article_content,create_time,category_id
+        from article
+        <where>
+            <if test="condition.categoryId != null">
+                category_id = #{condition.categoryId}
+            </if>
+            <if test="condition.tagId != null">
+                article_id in (select article_id from article_tag where tag_id = #{condition.tagId})
+            </if>
+        </where>
+        and is_delete = 0
+        and status = 1
+        order by article_id desc
+        limit #{limitCurrent},#{size}
+        ) a
+        join category c on a.category_id = c.category_id
     </select>
 
 

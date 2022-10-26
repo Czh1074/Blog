@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -67,6 +68,6 @@ public class TalkDTO {
     /**
      * 创建时间
      */
-    private Data createTime;
+    private Date createTime;
 
 }
