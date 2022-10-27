@@ -49,7 +49,7 @@ public class PhotoServiceImpl extends ServiceImpl<PhotoMapper, Photo> implements
      * @return {@link List<PhotoDTO>} 照片列表
      */
     @Override
-    public PhotoDTO listPhotosByAlbumId(Integer albumId){
+    public PhotoDTO listPhotosByAlbumId(Integer albumId, Long current){
         // 查询相册信息
         PhotoAlbum photoAlbum = photoAlbumService.getOne(new LambdaQueryWrapper<PhotoAlbum>()
                 .eq(PhotoAlbum::getAlbumId,albumId)
@@ -61,7 +61,7 @@ public class PhotoServiceImpl extends ServiceImpl<PhotoMapper, Photo> implements
         // 查询照片列表
         // 分页预处理
         // todo：理解getRecords后的方法
-        Page<Photo> page = new Page<>(PageUtils.getCurrent(),PageUtils.getSize());
+        Page<Photo> page = new Page<>((current-1)*10,PageUtils.getSize());
         List<String> photoList = photoMapper.selectPage(page,new LambdaQueryWrapper<Photo>()
                 .select(Photo::getPhotoSrc)
                 .eq(Photo::getAlbumId,albumId)

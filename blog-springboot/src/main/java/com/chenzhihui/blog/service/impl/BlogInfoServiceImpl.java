@@ -75,7 +75,7 @@ public class BlogInfoServiceImpl implements BlogInfoService {
 
     @Override
     public String getAbout() {
-        return null;
+        return "<h1>这是陈志辉，一个来自暨南大学学生的个人博客</h1></br><h2>希望能在一个月内完成</h2>";
     }
 
     /**

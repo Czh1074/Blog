@@ -30,13 +30,13 @@ public class PhotoController {
     /**
      * 根据相册id查看照片列表
      *
-     * @param albumId 相册id
+     * @param albumId 相册id current 当前页
      * @return {@link Result<PhotoDTO>} 照片列表
      */
     @ApiOperation(value = "根据相册id查看照片列表")
-    @GetMapping("/photo/listPhotosByAlbumId/{albumId}")
-    public Result<PhotoDTO> listPhotosByAlbumId(@PathVariable("albumId") Integer albumId) {
-        return Result.ok(photoService.listPhotosByAlbumId(albumId));
+    @GetMapping("/photo/listPhotosByAlbumId/{albumId}/{current}")
+    public Result<PhotoDTO> listPhotosByAlbumId(@PathVariable("albumId") Integer albumId,@PathVariable("current") Long current) {
+        return Result.ok(photoService.listPhotosByAlbumId(albumId,current));
     }
 }
 

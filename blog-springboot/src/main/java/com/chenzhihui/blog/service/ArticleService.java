@@ -1,9 +1,6 @@
 package com.chenzhihui.blog.service;
 
-import com.chenzhihui.blog.dto.ArchiveDTO;
-import com.chenzhihui.blog.dto.ArticleDTO;
-import com.chenzhihui.blog.dto.ArticlePreviewListDTO;
-import com.chenzhihui.blog.dto.ArticleSearchDTO;
+import com.chenzhihui.blog.dto.*;
 import com.chenzhihui.blog.pojo.Article;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.chenzhihui.blog.vo.ConditionVO;
@@ -34,7 +31,7 @@ public interface ArticleService extends IService<Article> {
      *
      * @return 文章列表
      */
-    List<Article> listArticles();
+    List<ArticleHomeDTO> listArticles(Long current);
 
     /**
      * 3、根据id查看文章

@@ -1,6 +1,7 @@
 package com.chenzhihui.blog.mapper;
 
 import com.chenzhihui.blog.dto.ArticleDTO;
+import com.chenzhihui.blog.dto.ArticleHomeDTO;
 import com.chenzhihui.blog.dto.ArticlePreviewDTO;
 import com.chenzhihui.blog.dto.ArticleRecommendDTO;
 import com.chenzhihui.blog.pojo.Article;
@@ -45,4 +46,11 @@ public interface ArticleMapper extends BaseMapper<Article> {
      * @return 查找文章列表
      */
     List<ArticlePreviewDTO> listArticlesByCondition(Long limitCurrent, Long size, ConditionVO condition);
+
+    /**
+     * 2、查询所有文章
+     *
+     * @return 文章列表
+     */
+    List<ArticleHomeDTO> getArticleList(Long current, Long size);
 }

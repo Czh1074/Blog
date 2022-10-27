@@ -63,6 +63,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         wrapper.select("article_id","article_title","create_time");
         wrapper.eq("is_delete",FALSE);
         wrapper.eq("status",PUBLIC.getStatus());
+        wrapper.orderByDesc("create_time");
         Page<Article> articlePage = articleMapper.selectPage(page,wrapper);
         System.out.println(articlePage.getRecords().toString());
         // 这一步相当于将articlePage.getRecords()获得到的列表，提取出我们需要的ArchiveDTO的信息，其余丢弃
@@ -76,11 +77,17 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      * @return 文章列表
      */
     @Override
-    public List<Article> listArticles() {
-        List<Article> articleList = new ArrayList<>();
-        QueryWrapper<Article> wrapper = new QueryWrapper<>();
-        articleList = baseMapper.selectList(wrapper);
-        return articleList;
+    public List<ArticleHomeDTO> listArticles(Long current) {
+        // 获取到除了标签列表外的所有需要属性
+        List<ArticleHomeDTO> articleHomeDTOList = articleMapper.getArticleList((current-1)*10,PageUtils.getSize());
+        // 将对应对articleId与List<TagDTO>对应起来
+        for(int i=0; i<articleHomeDTOList.size(); i++){
+//            System.out.println("输出查找到的所有文章i,它的文章标题：" + articleHomeDTOList.get(i).getArticleTitle());
+            List<Tag> tagList = tagMapper.getTagListById(articleHomeDTOList.get(i).getArticleId());
+            List<TagDTO> tagDTOList = BeanCopyUtils.copyList(tagList,TagDTO.class);
+            articleHomeDTOList.get(i).setTagDTOList(tagDTOList);
+        }
+        return articleHomeDTOList;
     }
 
     /**

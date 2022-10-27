@@ -24,6 +24,15 @@
         article_id, user_id, category_id, article_cover, article_title, article_content, type, original_url, is_top, is_delete, status, create_time, update_time
     </sql>
 
+    <select id="getArticleList" resultType="com.chenzhihui.blog.dto.ArticleHomeDTO">
+        select a.article_id, a.article_cover, a.article_title, a.create_time, a.is_top, SUBSTRING(a.article_content,1,500) as article_content, c.category_name, c.category_id
+        from article a
+        left join category c
+        on c.category_id = a.category_id
+        limit #{current},10
+    </select>
+
+
     <!--
     查询推荐文章
         1、select distinct是用来返回查询结果中article_id不重复的多表结构中的信息

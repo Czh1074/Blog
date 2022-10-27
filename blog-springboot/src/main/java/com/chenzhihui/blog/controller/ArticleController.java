@@ -1,10 +1,7 @@
 package com.chenzhihui.blog.controller;
 
 
-import com.chenzhihui.blog.dto.ArchiveDTO;
-import com.chenzhihui.blog.dto.ArticleDTO;
-import com.chenzhihui.blog.dto.ArticlePreviewListDTO;
-import com.chenzhihui.blog.dto.ArticleSearchDTO;
+import com.chenzhihui.blog.dto.*;
 import com.chenzhihui.blog.pojo.Article;
 import com.chenzhihui.blog.service.ArticleService;
 import com.chenzhihui.blog.vo.ConditionVO;
@@ -49,9 +46,9 @@ public class ArticleController {
      * @return {@link Result< Article >} 所有文章列表
      */
     @ApiOperation(value = "查看所有文章")
-    @GetMapping("/articles/articles")
-    public Result<List<Article>> listArticles() {
-        return Result.ok(articleService.listArticles());
+    @GetMapping("/articles/articles/{current}")
+    public Result<List<ArticleHomeDTO>> listArticles(@PathVariable("current") Long current) {
+        return Result.ok(articleService.listArticles(current));
     }
 
 
