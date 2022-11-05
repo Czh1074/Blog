@@ -3,7 +3,9 @@ package com.chenzhihui.blog;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.web.client.RestTemplate;
 
 /**
  * 博客启动类
@@ -20,10 +22,10 @@ public class BlogApplication {
         SpringApplication.run(BlogApplication.class, args);
     }
 
-//    // TODO 这个是做什么用的？？
-//    @Bean
-//    public RestTemplate restTemplate(){
-//        return new RestTemplate();
-//    }
+    // TODO 这个是做什么用的？？
+    @Bean
+    public RestTemplate restTemplate(){
+        return new RestTemplate();
+    }
 
 }

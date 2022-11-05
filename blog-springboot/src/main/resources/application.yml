@@ -12,7 +12,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://127.0.0.1:3306/blog?serverTimezone=Asia/Shanghai&allowMultiQueries=true
     username: root
-    password: Czh520hyt
+    password: Czh520hyt.
     hikari:
       minimum-idle: 5
       # 空闲连接存活最大时间，默认600000（10分钟）
@@ -31,7 +31,7 @@ spring:
       # todo: redis + rabbitmq + elasticsearch
   # redis配置
   redis:
-    host: 114.132.242.20
+    host: 127.0.0.1  #114.132.242.20
     port: 6379
     password: Czh520hyt
   # mq配置
@@ -104,7 +104,7 @@ upload:
 
 # 网站前台域名（邮件通知用）
 website:
-  url: http://114.132.242.20
+  url: http://114.132.242.20:8080
   #url: http://你的主域名或ip
 
 #第三方配置信息

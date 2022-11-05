@@ -60,13 +60,13 @@ public class TalkServiceImpl extends ServiceImpl<TalkMapper, Talk> implements Ta
      * @return {@link Result<TalkDTO>}
      */
     @Override
-    public PageResult<TalkDTO> listTalks() {
+    public PageResult<TalkDTO> listTalks(Long current, Long size) {
         // 查询说说总量
         Integer count = talkMapper.selectCount( new LambdaQueryWrapper<Talk>()
                 .eq(Talk::getStatus,PUBLIC.getStatus()));
         if(count == 0) return new PageResult<>();
         // 分页查询说说
-        List<TalkDTO> talkDTOList = talkMapper.listTalks(PageUtils.getLimitCurrent(),PageUtils.getSize());
+        List<TalkDTO> talkDTOList = talkMapper.listTalks((current-1)*10,PageUtils.getSize());
         // 查询说说评论量
         // todo: 未完成说说评论量
 

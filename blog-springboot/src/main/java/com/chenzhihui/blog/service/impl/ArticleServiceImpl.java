@@ -14,6 +14,7 @@ import com.chenzhihui.blog.pojo.Category;
 import com.chenzhihui.blog.pojo.Tag;
 import com.chenzhihui.blog.service.ArticleService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.chenzhihui.blog.service.RedisService;
 import com.chenzhihui.blog.util.BeanCopyUtils;
 import com.chenzhihui.blog.util.CommonUtils;
 import com.chenzhihui.blog.util.PageUtils;
@@ -24,11 +25,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpSession;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import static com.chenzhihui.blog.constant.CommonConst.FALSE;
 import static com.chenzhihui.blog.enums.ArticleStatusEnum.PUBLIC;
+import static com.chenzhihui.blog.constant.CommonConst.ARTICLE_SET;
+import static com.chenzhihui.blog.constant.RedisPrefixConst.ARTICLE_VIEWS_COUNT;
+
 
 /**
  * <p>
@@ -49,6 +54,12 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
     @Resource
     private TagMapper tagMapper;
+
+    @Resource
+    private HttpSession session;
+
+    @Resource
+    private RedisService redisService;
 
     /**
      * 1、查询归档文章
@@ -109,9 +120,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         List<ArticleRecommendDTO> newsArticleList = BeanCopyUtils.copyList(newsArticleList1,ArticleRecommendDTO.class);
         System.out.println(newsArticleList.toString());
         // 通过articleId查找文章信息
-        ArticleDTO article = articleMapper.getArticleById(articleId);
+        ArticleDTO articleDTO = articleMapper.getArticleById(articleId);
         // todo：更新文章浏览量
-        //updateArticleViewCount(articleId);
+        updateArticleViewsCount(articleId);
         //查询上一篇文章
         QueryWrapper<Article> queryWrapperLast = new QueryWrapper<>();
         queryWrapperLast.select("article_id","article_title","article_cover");
@@ -121,7 +132,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         queryWrapperLast.orderByDesc("article_id");
         queryWrapperLast.last("limit 1");
         Article lastArticle = articleMapper.selectOne(queryWrapperLast);
-        article.setLastArticle(BeanCopyUtils.copyObject(lastArticle, ArticlePaginationDTO.class));
+        articleDTO.setLastArticle(BeanCopyUtils.copyObject(lastArticle, ArticlePaginationDTO.class));
         //查询下一篇文章
         QueryWrapper<Article> queryWrapperNext = new QueryWrapper<>();
         queryWrapperNext.select("article_id","article_title","article_cover");
@@ -131,34 +142,38 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         queryWrapperNext.orderByDesc("article_id");
         queryWrapperNext.last("limit 1");
         Article nextArticle = articleMapper.selectOne(queryWrapperNext);
-        article.setNextArticle(BeanCopyUtils.copyObject(nextArticle, ArticlePaginationDTO.class));
+        articleDTO.setNextArticle(BeanCopyUtils.copyObject(nextArticle, ArticlePaginationDTO.class));
         // todo：封装点赞量和浏览量
+        Double score = redisService.zScore(ARTICLE_VIEWS_COUNT, articleId);
+        if (Objects.nonNull(score)) {
+            articleDTO.setViewsCount(score.intValue());
+        }
         //封装文章信息
         try{
-            article.setRecommendArticleList(recommendArticleList);
-            article.setNewestArticleList(newsArticleList);
+            articleDTO.setRecommendArticleList(recommendArticleList);
+            articleDTO.setNewestArticleList(newsArticleList);
         }catch (Exception e){
             log.error(StrUtil.format("堆栈信息:{}", ExceptionUtil.stacktraceToString(e)));
         }
-        return article;
+        return articleDTO;
     }
 
 
-//    /**
-//     * 更新文章浏览量
-//     *
-//     * @param articleId 文章id
-//     */
-//    public void updateArticleViewsCount(Integer articleId) {
-//        // 判断是否第一次访问，增加浏览量
-//        Set<Integer> articleSet = CommonUtils.castSet(Optional.ofNullable(session.getAttribute(ARTICLE_SET)).orElseGet(HashSet::new), Integer.class);
-//        if (!articleSet.contains(articleId)) {
-//            articleSet.add(articleId);
-//            session.setAttribute(ARTICLE_SET, articleSet);
-//            // 浏览量+1
-//            redisService.zIncr(ARTICLE_VIEWS_COUNT, articleId, 1D);
-//        }
-//    }
+    /**
+     * 更新文章浏览量
+     *
+     * @param articleId 文章id
+     */
+    public void updateArticleViewsCount(Integer articleId) {
+        // 判断是否第一次访问，增加浏览量
+        Set<Integer> articleSet = CommonUtils.castSet(Optional.ofNullable(session.getAttribute(ARTICLE_SET)).orElseGet(HashSet::new), Integer.class);
+        if (!articleSet.contains(articleId)) {
+            articleSet.add(articleId);
+            session.setAttribute(ARTICLE_SET, articleSet);
+            // 浏览量+1
+            redisService.zIncr(ARTICLE_VIEWS_COUNT, articleId, 1D);
+        }
+    }
 
 
     /**

@@ -23,7 +23,6 @@ import java.util.List;
  * @since 2022-10-19
  */
 @RestController
-//@RequestMapping("/friendLink")
 public class FriendLinkController {
 
     @Autowired
@@ -34,7 +33,7 @@ public class FriendLinkController {
      *
      * @return {@link Result<FriendLinkDTO>} 友情链接列表
      * */
-    @GetMapping("/friendLink/listFriendLinks")
+    @GetMapping("/links/listFriendLinks")
     public Result<List<FriendLinkDTO>> listFriendLinks(){
         return Result.ok(friendLinkService.listFriendLinks());
     }

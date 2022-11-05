@@ -50,9 +50,9 @@ public class TalkController {
      * @return {@link Result<TalkDTO>}
      */
     @ApiOperation(value = "查看说说列表")
-    @GetMapping("/talk/listTalks")
-    public Result<PageResult<TalkDTO>> listTalks() {
-        return Result.ok(talkService.listTalks());
+    @GetMapping("/talks/listTalks/{current}/{size}")
+    public Result<PageResult<TalkDTO>> listTalks(@PathVariable("current") Long current,@PathVariable("size") Long size) {
+        return Result.ok(talkService.listTalks(current,size));
     }
 
     /**

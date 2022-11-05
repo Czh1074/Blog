@@ -29,6 +29,7 @@
         from article a
         left join category c
         on c.category_id = a.category_id
+        order by is_top desc
         limit #{current},10
     </select>
 

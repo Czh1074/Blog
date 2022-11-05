@@ -31,7 +31,7 @@ public interface TalkService extends IService<Talk> {
      *
      * @return {@link Result<TalkDTO>}
      */
-    PageResult<TalkDTO> listTalks();
+    PageResult<TalkDTO> listTalks(Long current, Long size);
 
     /**
      * 根据id查看说说详细信息
