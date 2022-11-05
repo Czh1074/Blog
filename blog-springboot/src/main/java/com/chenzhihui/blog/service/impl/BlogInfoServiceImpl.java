@@ -9,6 +9,7 @@ import com.chenzhihui.blog.pojo.Category;
 import com.chenzhihui.blog.pojo.WebsiteConfig;
 import com.chenzhihui.blog.service.BlogInfoService;
 import com.chenzhihui.blog.service.PageService;
+import com.chenzhihui.blog.service.RedisService;
 import com.chenzhihui.blog.vo.PageVO;
 import com.chenzhihui.blog.vo.WebsiteConfigVO;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +17,11 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Optional;
 
 import static com.chenzhihui.blog.enums.ArticleStatusEnum.PUBLIC;
 import static com.chenzhihui.blog.constant.CommonConst.FALSE;
+import static com.chenzhihui.blog.constant.RedisPrefixConst.BLOG_VIEWS_COUNT;
 import static com.chenzhihui.blog.constant.CommonConst.*;
 
 /**
@@ -31,17 +34,19 @@ import static com.chenzhihui.blog.constant.CommonConst.*;
 public class BlogInfoServiceImpl implements BlogInfoService {
 
     @Resource
-    public ArticleMapper articleMapper;
+    private ArticleMapper articleMapper;
     @Resource
-    public CategoryMapper categoryMapper;
+    private CategoryMapper categoryMapper;
     @Resource
-    public TagMapper tagMapper;
+    private TagMapper tagMapper;
     @Resource
-    public PageMapper pageMapper;
+    private PageMapper pageMapper;
     @Resource
-    public PageService pageService;
+    private PageService pageService;
     @Resource
-    public WebsiteConfigMapper websiteConfigMapper;
+    private WebsiteConfigMapper websiteConfigMapper;
+    @Resource
+    private RedisService redisService;
 
 
     @Override
@@ -56,7 +61,13 @@ public class BlogInfoServiceImpl implements BlogInfoService {
         // 查询标签数量
         Integer tagCount = tagMapper.selectCount(null);
         // todo：查询访问量 涉及到redis
-
+        // 查询访问量
+        Object count = redisService.get(BLOG_VIEWS_COUNT);
+        // 访问量+1
+        int realCount = Integer.parseInt(String.valueOf(count));
+        realCount++;
+        redisService.set(BLOG_VIEWS_COUNT,realCount);
+        String viewsCount = Optional.ofNullable(realCount).orElse(0).toString();
         // todo:查询网站配置(这个方法是什么意思？)
         WebsiteConfigVO websiteConfig = this.getWebsiteConfig();
 
@@ -68,6 +79,7 @@ public class BlogInfoServiceImpl implements BlogInfoService {
                 .articleCount(articleCount)
                 .categoryCount(categoryCount)
                 .tagCount(tagCount)
+                .viewsCount(viewsCount)
                 .websiteConfig(websiteConfig)
                 .pageList(pageVOList)
                 .build();

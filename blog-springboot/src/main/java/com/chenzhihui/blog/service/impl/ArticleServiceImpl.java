@@ -30,6 +30,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import static com.chenzhihui.blog.constant.CommonConst.FALSE;
+import static com.chenzhihui.blog.constant.RedisPrefixConst.BLOG_VIEWS_COUNT;
 import static com.chenzhihui.blog.enums.ArticleStatusEnum.PUBLIC;
 import static com.chenzhihui.blog.constant.CommonConst.ARTICLE_SET;
 import static com.chenzhihui.blog.constant.RedisPrefixConst.ARTICLE_VIEWS_COUNT;
