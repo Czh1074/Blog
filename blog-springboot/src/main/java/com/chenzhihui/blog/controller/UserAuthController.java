@@ -10,7 +10,11 @@ import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import javax.websocket.server.PathParam;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * <p>
@@ -68,6 +72,35 @@ public class UserAuthController {
     @PutMapping("/userAuth/password")
     public Result<?> updatePassword(@Valid @RequestBody UserVO user) {
         userAuthService.updatePassword(user);
+        return Result.ok();
+    }
+
+    /**
+     * 用户登录
+     *
+     * @param username,password 用户信息
+     * @return {@link Result<>}
+     */
+    @PostMapping("/admin/login")
+    public Result<?> login(@PathParam("username") String username, @PathParam("password") String password){
+        Map<String, Object> map = new HashMap<>();
+        System.out.println("我被调用到了！！");
+        map.put("token","admin-token-a");
+        return Result.ok(map);
+    }
+
+    @GetMapping("/admin/info")
+    public Result info(HttpServletRequest request) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("roles", "[admin]");
+        map.put("introduction", "管理员");
+        map.put("avatar", "https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif");
+        map.put("name", "Super Admin");
+        return Result.ok(map);
+    }
+
+    @PostMapping("/admin/logout")
+    public Result logout() {
         return Result.ok();
     }
 

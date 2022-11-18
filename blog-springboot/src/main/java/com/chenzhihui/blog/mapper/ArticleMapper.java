@@ -1,9 +1,6 @@
 package com.chenzhihui.blog.mapper;
 
-import com.chenzhihui.blog.dto.ArticleDTO;
-import com.chenzhihui.blog.dto.ArticleHomeDTO;
-import com.chenzhihui.blog.dto.ArticlePreviewDTO;
-import com.chenzhihui.blog.dto.ArticleRecommendDTO;
+import com.chenzhihui.blog.dto.*;
 import com.chenzhihui.blog.pojo.Article;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.chenzhihui.blog.vo.ConditionVO;
@@ -53,4 +50,11 @@ public interface ArticleMapper extends BaseMapper<Article> {
      * @return 文章列表
      */
     List<ArticleHomeDTO> getArticleList(Long current, Long size);
+
+    /**
+     * 查询所有后台文章
+     *
+     * @return 文章列表
+     */
+    List<ArticleBackDTO> listBackArticle(long current, Long size, ConditionVO conditionVO);
 }

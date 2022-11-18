@@ -5,32 +5,44 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.chenzhihui.blog.config.TencentCosConfig;
 import com.chenzhihui.blog.dto.*;
+import com.chenzhihui.blog.dto.ArticleTopVO;
+import com.chenzhihui.blog.exception.BizException;
+import com.chenzhihui.blog.mapper.ArticleTagMapper;
 import com.chenzhihui.blog.mapper.CategoryMapper;
 import com.chenzhihui.blog.mapper.TagMapper;
-import com.chenzhihui.blog.pojo.Article;
+import com.chenzhihui.blog.pojo.*;
 import com.chenzhihui.blog.mapper.ArticleMapper;
-import com.chenzhihui.blog.pojo.Category;
-import com.chenzhihui.blog.pojo.Tag;
-import com.chenzhihui.blog.service.ArticleService;
+import com.chenzhihui.blog.service.*;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.chenzhihui.blog.service.RedisService;
 import com.chenzhihui.blog.util.BeanCopyUtils;
 import com.chenzhihui.blog.util.CommonUtils;
 import com.chenzhihui.blog.util.PageUtils;
-import com.chenzhihui.blog.vo.ConditionVO;
-import com.chenzhihui.blog.vo.PageResult;
-import com.chenzhihui.blog.vo.Result;
+import com.chenzhihui.blog.util.UserUtils;
+import com.chenzhihui.blog.vo.*;
+import com.qcloud.cos.COSClient;
+import com.qcloud.cos.model.PutObjectRequest;
+import com.qcloud.cos.model.PutObjectResult;
+import com.qcloud.cos.model.StorageClass;
+import io.swagger.models.auth.In;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import static com.chenzhihui.blog.constant.CommonConst.FALSE;
 import static com.chenzhihui.blog.constant.RedisPrefixConst.BLOG_VIEWS_COUNT;
+import static com.chenzhihui.blog.enums.ArticleStatusEnum.DRAFT;
 import static com.chenzhihui.blog.enums.ArticleStatusEnum.PUBLIC;
 import static com.chenzhihui.blog.constant.CommonConst.ARTICLE_SET;
 import static com.chenzhihui.blog.constant.RedisPrefixConst.ARTICLE_VIEWS_COUNT;
@@ -62,6 +74,28 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Resource
     private RedisService redisService;
 
+    @Resource
+    private BlogInfoService blogInfoService;
+
+    @Resource
+    private TagService tagService;
+
+    @Resource
+    private ArticleTagService articleTagService;
+
+    @Resource
+    private ArticleTagMapper articleTagMapper;
+
+    @Resource
+    private TencentCosPropertiesPicture tencentCosPropertiesPicture;
+
+    @Resource
+    private TencentCosConfig tencentCosConfig;
+
+    @Resource
+    @Qualifier(TencentCosConfig.COS_IMAGE)
+    private COSClient cosClientPicture;
+
     /**
      * 1、查询归档文章
      *
@@ -76,6 +110,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         wrapper.eq("is_delete",FALSE);
         wrapper.eq("status",PUBLIC.getStatus());
         wrapper.orderByDesc("create_time");
+        wrapper.orderByDesc("article_id");
         Page<Article> articlePage = articleMapper.selectPage(page,wrapper);
         System.out.println(articlePage.getRecords().toString());
         // 这一步相当于将articlePage.getRecords()获得到的列表，提取出我们需要的ArchiveDTO的信息，其余丢弃
@@ -94,7 +129,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         List<ArticleHomeDTO> articleHomeDTOList = articleMapper.getArticleList((current-1)*10,PageUtils.getSize());
         // 将对应对articleId与List<TagDTO>对应起来
         for(int i=0; i<articleHomeDTOList.size(); i++){
-//            System.out.println("输出查找到的所有文章i,它的文章标题：" + articleHomeDTOList.get(i).getArticleTitle());
             List<Tag> tagList = tagMapper.getTagListById(articleHomeDTOList.get(i).getArticleId());
             List<TagDTO> tagDTOList = BeanCopyUtils.copyList(tagList,TagDTO.class);
             articleHomeDTOList.get(i).setTagDTOList(tagDTOList);
@@ -122,7 +156,6 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         System.out.println(newsArticleList.toString());
         // 通过articleId查找文章信息
         ArticleDTO articleDTO = articleMapper.getArticleById(articleId);
-        // todo：更新文章浏览量
         updateArticleViewsCount(articleId);
         //查询上一篇文章
         QueryWrapper<Article> queryWrapperLast = new QueryWrapper<>();
@@ -144,7 +177,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         queryWrapperNext.last("limit 1");
         Article nextArticle = articleMapper.selectOne(queryWrapperNext);
         articleDTO.setNextArticle(BeanCopyUtils.copyObject(nextArticle, ArticlePaginationDTO.class));
-        // todo：封装点赞量和浏览量
+        // todo：封装点赞量
         Double score = redisService.zScore(ARTICLE_VIEWS_COUNT, articleId);
         if (Objects.nonNull(score)) {
             articleDTO.setViewsCount(score.intValue());
@@ -188,6 +221,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         // 查询文章
         // 对查询过程中使用对current进行调整，设置为传值的current
         Long current = condition.getLimitCurrent();
+        System.out.println("current wei :" + current);
         List<ArticlePreviewDTO> articlePreviewDTOList = articleMapper.listArticlesByCondition((current-1)*10, 9L,condition);
         System.out.println("输出查找长度" + articlePreviewDTOList.size());
         // 将对应对articleId与List<TagDTO>对应起来
@@ -197,13 +231,22 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             articlePreviewDTOList.get(i).setTagDTOList(tagDTOList);
         }
         // 搜索条件对应名（标签或分类名）
+        // todo 1
         String name;
         if(Objects.nonNull(condition.getCategoryId())){
-            name = categoryMapper.selectOne(new LambdaQueryWrapper<Category>().select(Category::getCategoryName)
-                    .eq(Category::getCategoryId,condition.getCategoryId())).getCategoryName();
+            QueryWrapper<Category> queryWrapper = new QueryWrapper<>();
+            queryWrapper.select("category_name");
+            queryWrapper.eq("category_id",condition.getCategoryId());
+            name = categoryMapper.selectOne(queryWrapper).getCategoryName();
+//            name = categoryMapper.selectOne(new LambdaQueryWrapper<Category>().select(Category::getCategoryName)
+//                    .eq(Category::getCategoryId,condition.getCategoryId())).getCategoryName();
         }else{
-            name = tagMapper.selectOne(new LambdaQueryWrapper<Tag>().select(Tag::getTagName)
-                    .eq(Tag::getTagId,condition.getTagId())).getTagName();
+            QueryWrapper<Tag> queryWrapper = new QueryWrapper<>();
+            queryWrapper.select("tag_name");
+            queryWrapper.eq("tag_id",condition.getTagId());
+            name = tagMapper.selectOne(queryWrapper).getTagName();
+//            name = tagMapper.selectOne(new LambdaQueryWrapper<Tag>().select(Tag::getTagName)
+//                    .eq(Tag::getTagId,condition.getTagId())).getTagName();
         }
         return ArticlePreviewListDTO.builder().articlePreviewDTOList(articlePreviewDTOList).name(name).build();
     }
@@ -240,6 +283,290 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
 
         // 通过articleId查找文章
         // 将点赞的用户与文章绑定 -> 属于点赞状态
+    }
+
+    /**
+     * 7、添加或修改文章
+     *
+     * @param articleVO 文章信息
+     * @return {@link Result<>}
+     * */
+    @Override
+    public void saveOrUpdateArticle(ArticleVO articleVO) {
+        // 查询博客配置信息 => 主要是为了获取文章的默认封面
+        CompletableFuture<WebsiteConfigVO> webConfig = CompletableFuture.supplyAsync(()->blogInfoService.getWebsiteConfig());
+
+        // 保存文章分类 -> 根据前台信息传回来的信息保存分类信息
+        Category category = saveArticleCategory(articleVO);
+
+        // 保存或修改文章 -> 相当于前台传回来的articleVO中跟Article有关的信息都赋值给article
+        Article article = BeanCopyUtils.copyObject(articleVO,Article.class);
+        // 通过保存文章分类 -> 得到分类信息 -> 更新article的categoryId
+        if(Objects.nonNull(category)){
+            article.setCategoryId(category.getCategoryId());
+        }
+        // 设置文章的默认封面
+        if(StrUtil.isBlank(article.getArticleCover())){
+            try{
+                article.setArticleCover(webConfig.get().getArticleCover());
+            }catch (Exception e){
+                throw new BizException("设定默认文章封面失败");
+            }
+        }
+//        // 保存文章用户信息 -> 根据articleId是否为0
+        article.setUserId(1);
+        // 保存文章信息
+        if(articleVO.getArticleId() != null){
+//            articleMapper.updateById(article);
+            article.setUpdateTime(new Date());
+            articleMapper.update(article,new LambdaQueryWrapper<Article>().eq(Article::getArticleId,article.getArticleId()));
+        }else{
+            article.setCreateTime(new Date());
+            articleMapper.insert(article);
+        }
+        // this.saveOrUpdate(article);
+        // 保存文章标签
+        saveArticleTag(articleVO,article.getArticleId());
+    }
+
+
+    /**
+     * 7.1、保存文章分类
+     *
+     * @param articleVO 文章信息
+     * @return {@link Category} 文章分类
+     */
+    private Category saveArticleCategory(ArticleVO articleVO) {
+        // 查询是否已经存在
+        // todo 2
+        QueryWrapper<Category> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("category_name",articleVO.getCategoryName());
+        Category category = categoryMapper.selectOne(queryWrapper);
+        if(!Objects.isNull(category)){
+            return category;
+        }else{
+            categoryMapper.delete(new LambdaQueryWrapper<Category>().eq(Category::getCategoryId,articleVO.getCategoryId()));
+            category = Category.builder()
+                    .categoryName(articleVO.getCategoryName())
+                    .createTime(new Date())
+                    .build(); // 通过建造者模式进行数据的赋值
+            categoryMapper.insert(category);// 新增分类信息
+            return category;
+        }}
+
+    /**
+     * 保存文章标签
+     *
+     * @param articleVO 文章信息
+     */
+    private void saveArticleTag(ArticleVO articleVO, Integer articleId) {
+        // todo： 为什么要删除所有文章标签呢 -> 不然会重复存取
+        // 编辑文章则删除文章所有标签
+        if (Objects.nonNull(articleVO.getArticleId())) {
+            // 通过articleId得到articleTagList（主要是要tagId属性）
+            List<ArticleTag> articleTagList = articleTagMapper.selectList(new LambdaQueryWrapper<ArticleTag>()
+                    .eq(ArticleTag::getArticleId,articleId));
+            for(int i = 0; i < articleTagList.size(); i++){
+                // 删除articleId在ArticleTag类中的记录
+                articleTagMapper.deleteById(articleTagList.get(i).getArticleTagId());
+                // 判断当前tag标签对应的文章数量，如果超过1，则不删除，否则删除
+                Integer tagArticleCount = tagMapper.selectCount(new LambdaQueryWrapper<Tag>()
+                        .eq(Tag::getTagId, articleTagList.get(i).getTagId()));
+                if(tagArticleCount == 1){
+                    tagMapper.deleteById(articleTagList.get(i).getTagId());
+                }
+            }
+
+        }
+        // 添加文章标签
+        // 获取要添加的标签
+        List<String> tagNameList = articleVO.getTagNameList();
+        if(!CollectionUtils.isEmpty(tagNameList)){
+            // 查询现在已经存在的标签
+            QueryWrapper<Tag> queryWrapper = new QueryWrapper<>();
+            queryWrapper.in("tag_name",tagNameList);
+            List<Tag> existTagList = tagService.list(queryWrapper);
+            List<String> existTagNameList = existTagList.stream().map(Tag::getTagName).collect(Collectors.toList());
+            List<Integer> existTagIdList = existTagList.stream().map(Tag::getTagId).collect(Collectors.toList());
+            // 对比新增不存在的标签
+            tagNameList.removeAll(existTagNameList);
+            if(!CollectionUtils.isEmpty(tagNameList)){
+                List<Tag> tagList = tagNameList.stream().map(item -> Tag.builder().tagName(item).build()).collect(Collectors.toList());
+                tagService.saveBatch(tagList);
+                List<Integer> tagIdList = tagList.stream().map(Tag::getTagId).collect(Collectors.toList());
+                existTagIdList.addAll(tagIdList);
+            }
+            // 提取标签id绑定文章
+            List<ArticleTag> articleTagList = existTagIdList.stream().map(item -> ArticleTag.builder()
+                            .articleId(articleId)
+                            .tagId(item)
+                            .build())
+                    .collect(Collectors.toList());
+            articleTagService.saveBatch(articleTagList);
+        }
+
+    }
+
+    /**
+     * 8、后台查看文章列表
+     *
+     * @param conditionVO 查询条件
+     * @return {@Link Result<PageResult<ArticleBackDTO>>}
+     * */
+    @Override
+    public PageResult<ArticleBackDTO> listBackArticles(ConditionVO conditionVO) {
+        // 查询文章总数
+        Integer count = articleMapper.selectCount(new LambdaQueryWrapper<Article>().eq(Article::getIsDelete,FALSE));
+        if(count == 0){ // 没有文章
+            return new PageResult<>();
+        }
+        // 查询后台文章
+        List<ArticleBackDTO> articleBackDTOList = articleMapper.listBackArticle((conditionVO.getLimitCurrent()-1)*10,conditionVO.getSize(),conditionVO);
+        System.out.println("后台文章" + articleBackDTOList);
+        // 通过文章查找对应的文章标签
+        for(int i = 0; i < articleBackDTOList.size(); i++){
+            // 存储每个文章对应的标签
+            List<TagDTO> tagDTOList = new ArrayList<>();
+            // 获得文章id -> 从article_tag中找到对应的tag_id
+            List<ArticleTag> articleTagList = articleTagMapper.selectList(new LambdaQueryWrapper<ArticleTag>()
+                    .eq(ArticleTag::getArticleId,articleBackDTOList.get(i).getArticleId()));
+            for(int j = 0; j < articleTagList.size(); j++){
+                tagDTOList.add(BeanCopyUtils.copyObject(tagMapper.selectOne(new LambdaQueryWrapper<Tag>().eq(Tag::getTagId,articleTagList.get(j).getTagId())),TagDTO.class));
+            }
+            articleBackDTOList.get(i).setTagDTOList(tagDTOList);
+        }
+        // 查询文章浏览量
+        Map<Object, Double> viewsCountMap = redisService.zAllScore(ARTICLE_VIEWS_COUNT);
+        // 封装浏览量
+        articleBackDTOList.forEach(item -> {
+            Double viewsCount = viewsCountMap.get(item.getArticleId());
+            if (Objects.nonNull(viewsCount)) {
+                item.setViewsCount(viewsCount.intValue());
+            }
+        });
+        return new PageResult<>(articleBackDTOList, count);
+    }
+    /**
+     * 9、修改文章是否置顶
+     *
+     * @param articleId,isTop 修改置顶
+     * @return {@link Result<?>}
+     * */
+    @Override
+    public void updateArticleTop(Integer articleId, Integer isTop) {
+        Article article = articleMapper.selectOne(new LambdaQueryWrapper<Article>()
+                .eq(Article::getArticleId, articleId));
+        article.setIsTop(isTop);
+        articleMapper.updateById(article);
+    }
+
+    @Override
+    public ArticleVO findBackArticleById(Integer articleId) {
+        // 查找文章信息
+        Article article = articleMapper.selectById(articleId);
+        // 查询文章分类 -> 获取类别名称
+        Category category = categoryMapper.selectById(article.getCategoryId());
+        String categoryName = category.getCategoryName();
+        // 查找文章标签
+        List<Tag> tagList = tagMapper.getTagListById(articleId);
+        List<String> tagNameList = new ArrayList<>();
+        for(int i = 0; i < tagList.size(); i++){
+            tagNameList.add(tagList.get(i).getTagName());
+        }
+        // 封装数据
+        ArticleVO articleVO = BeanCopyUtils.copyObject(article,ArticleVO.class);
+        articleVO.setCategoryName(categoryName);
+        articleVO.setTagNameList(tagNameList);
+        return articleVO;
+    }
+
+    @Override
+    public String getUploadFileTencentCosUrl(MultipartFile multipartFile) {
+        File localFile = null;
+        try {
+            String originalFilename = multipartFile.getOriginalFilename();
+            String[] filename = originalFilename.split("\\.");
+            localFile=File.createTempFile(filename[0], filename[1]);
+            multipartFile.transferTo(localFile);
+            localFile.deleteOnExit();
+        } catch (IOException e) {
+            throw new BizException("文件上传失败");
+        }
+
+        if(localFile == null){
+            throw new BizException("本地文件为空");
+        }
+
+        String key = TencentCosConfig.COS_IMAGE + "/" + new Date().getTime() + ".png";
+
+        PutObjectRequest putObjectRequest =
+                new PutObjectRequest(tencentCosPropertiesPicture.getBucketName(), key, localFile);
+        //设置存储类型 默认标准型
+        putObjectRequest.setStorageClass(StorageClass.Standard);
+
+        COSClient cosClient = tencentCosConfig.getCoSClient4Picture();
+
+        try {
+            PutObjectResult putObjectResult = cosClient.putObject(putObjectRequest);
+            //putObjectResult 会返回etag
+            String etag = putObjectResult.getETag();
+        } catch (Exception e) {
+            throw new BizException("文件上传失败");
+        }
+        cosClient.shutdown();
+        String url = tencentCosPropertiesPicture.getBaseUrl()+ "/" + key;
+        return url;
+    }
+
+    @Override
+    public void updateArticleDelete(Integer articleId) {
+        // 删除文章信息 -> 删除文章信息前，先获得categoryId
+        Integer categoryId = articleMapper.selectOne(new LambdaQueryWrapper<Article>()
+                .eq(Article::getArticleId,articleId)).getCategoryId();
+        // 删除文章分类信息： 需要看当前分类是否有其他文章
+        Integer categoryCount = articleMapper.selectCount(new LambdaQueryWrapper<Article>()
+                .eq(Article::getCategoryId,categoryId));
+        System.out.println("输出当前的目录下的文章个数： " + categoryCount);
+        if(categoryCount == 1){ //如果只有一个，意味着该目录只对应当前文章，故而进行删除操作
+            categoryMapper.deleteById(categoryId);
+        }
+        articleMapper.deleteById(articleId);
+        // 删除文章标签信息： 需要查看当前分类是否有其他文章
+        // 查找当前articleId对应的tagIdList，再删除
+        List<ArticleTag> articleTagList = articleTagMapper.selectList(new LambdaQueryWrapper<ArticleTag>()
+                .eq(ArticleTag::getArticleId,articleId));
+        for(int i = 0; i < articleTagList.size(); i++){ // 赋值为tagIdList
+            // 删除articleId在ArticleTag类中的记录
+            articleTagMapper.deleteById(articleTagList.get(i).getArticleTagId());
+            // 判断当前tag标签对应的文章数量，如果超过1，则不删除，否则删除
+            Integer tagArticleCount = tagMapper.selectCount(new LambdaQueryWrapper<Tag>()
+                    .eq(Tag::getTagId, articleTagList.get(i).getTagId()));
+            if(tagArticleCount == 1){
+                tagMapper.deleteById(articleTagList.get(i).getTagId());
+            }
+        }
+//        // 删除文章信息 -> 删除文章信息前，先获得categoryId
+//        Integer categoryId = articleMapper.selectOne(new LambdaQueryWrapper<Article>()
+//                .eq(Article::getArticleId,articleId)).getCategoryId();
+//        System.out.println("输出categoryId ： " + categoryId);
+//        // 删除文章分类信息： 需要看当前分类是否有其他文章
+//        Integer categoryCount = articleMapper.selectCount(new LambdaQueryWrapper<Article>()
+//                .eq(Article::getCategoryId,categoryId));
+//        System.out.println("输出当前的目录下的文章个数： " + categoryCount);
+//        if(categoryCount == 1){ //如果只有一个，意味着该目录只对应当前文章，故而进行删除操作
+//            System.out.println("失败");
+//        }
+
+    }
+
+    /**
+     * 14、保存草稿
+     *
+     * @param articleVO 查询条件
+     * */
+    @Override
+    public void saveDraft(ArticleVO articleVO) {
+        // 保存基本的信息，其实就是不发布而已，和发布没有很大的区别
     }
 
 

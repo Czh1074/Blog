@@ -1,5 +1,6 @@
 package com.chenzhihui.blog.service;
 
+import com.chenzhihui.blog.dto.BlogBackHomeInfoDTO;
 import com.chenzhihui.blog.dto.BlogHomeInfoDTO;
 import com.chenzhihui.blog.vo.Result;
 import com.chenzhihui.blog.vo.WebsiteConfigVO;
@@ -33,4 +34,11 @@ public interface BlogInfoService {
     void report();
 
     WebsiteConfigVO getWebsiteConfig();
+
+    /**
+     * 1、查看博客信息
+     *
+     * @return {@link Result <BlogHomeInfoDTO>} 博客信息
+     */
+    BlogBackHomeInfoDTO getBlogBackHomeInfo();
 }

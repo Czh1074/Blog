@@ -1,17 +1,35 @@
 package com.chenzhihui.blog.controller;
 
 
+import com.baomidou.mybatisplus.extension.api.R;
+import com.chenzhihui.blog.config.TencentCosConfig;
 import com.chenzhihui.blog.dto.*;
+import com.chenzhihui.blog.exception.BizException;
 import com.chenzhihui.blog.pojo.Article;
+import com.chenzhihui.blog.pojo.TencentCosPropertiesPicture;
 import com.chenzhihui.blog.service.ArticleService;
+import com.chenzhihui.blog.vo.ArticleVO;
 import com.chenzhihui.blog.vo.ConditionVO;
 import com.chenzhihui.blog.vo.PageResult;
 import com.chenzhihui.blog.vo.Result;
+import com.qcloud.cos.COSClient;
+import com.qcloud.cos.exception.CosClientException;
+import com.qcloud.cos.model.PutObjectRequest;
+import com.qcloud.cos.model.PutObjectResult;
+import com.qcloud.cos.model.StorageClass;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.models.auth.In;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
+import javax.validation.Valid;
+import java.io.File;
+import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -75,7 +93,6 @@ public class ArticleController {
     @ApiOperation(value = "根据条件查询文章")
     @GetMapping("/articles/findByCondition")
     public Result<ArticlePreviewListDTO> listArticlesByCondition(ConditionVO condition) {
-        System.out.println("输出current" + condition.getLimitCurrent());
         return Result.ok(articleService.listArticlesByCondition(condition));
     }
 
@@ -92,7 +109,7 @@ public class ArticleController {
     }
 
     /**
-     * 点赞文章
+     * 6、点赞文章
      *
      * @param articleId 文章id
      * @return {@link Result<>}
@@ -108,26 +125,93 @@ public class ArticleController {
 
 
 
-
-
-
-
         //---- 后台方法⬇️ ----//
 
+    /**
+     * 8、后台查看文章列表
+     *
+     * @param conditionVO 查询条件
+     * @return {@Link Result<PageResult<ArticleBackDTO>>}
+     * */
+    @GetMapping("/admin/articles")
+    public Result<PageResult<ArticleBackDTO>> listBackArticles(ConditionVO conditionVO){
+        return Result.ok(articleService.listBackArticles(conditionVO));
+    }
 
-//    /**
-//     * 添加或修改文章
-//     *
-//     * @param articleVO 文章信息
-//     * @return {@link Result<>}
-//     * */
-//    @GetMapping("/addOrUpdateArticle")
-//    public Result<?> saveOrUpdateArticle(ArticleVO articleVO){
-//        articleService.saveOrUpdateArticle(articleVO);
-//        return Result.ok();
-//    }
+    /**
+     * 9、修改文章是否置顶
+     *
+     * @param articleId,isTop 修改置顶
+     * @return {@link Result<?>}
+     * */
+    @GetMapping("/admin/articles/top")
+    public Result<?> updateArticleTop(Integer articleId,Integer isTop){
+        articleService.updateArticleTop(articleId, isTop);
+        return Result.ok();
+    }
+
+    /**
+     * 10、后台-根据id查找文章
+     *
+     * @param articleId 文章信息
+     * @return {@link Result<ArticleVO>}
+     * */
+    @GetMapping("admin/findBackArticleById/{articleId}")
+    public Result<ArticleVO> findBackArticleById(@PathVariable("articleId") Integer articleId){
+        return Result.ok(articleService.findBackArticleById(articleId));
+    }
+
+    /**
+     * 11、添加或修改文章
+     *
+     * @param articleVO 文章信息
+     * @return {@link Result<>}
+     * */
+    @PostMapping("admin/saveOrUpdateArticle2")
+    public Result<?> saveOrUpdateArticle(@RequestBody ArticleVO articleVO){
+        articleService.saveOrUpdateArticle(articleVO);
+        return Result.ok();
+    }
 
 
+
+    /**
+     * 12、上传文章图片
+     *
+     * @param multipartFile 文件
+     * @return {@link Result<String>} 文章图片地址
+     */
+    @PostMapping("/admin/articles/images")
+    @ApiOperation("上传文件到腾讯云的cos中并返回url")
+    public Result<String> getUploadFile2TencentCosUrl(@RequestParam("file") MultipartFile multipartFile) throws BizException {
+        return Result.ok(articleService.getUploadFileTencentCosUrl(multipartFile));
+
+    }
+
+    /**
+     * 13、物理删除文章
+     *
+     * @param articleId 文章id
+     * @return {@link Result<?>}
+     * */
+    @PostMapping ("/admin/updateArticleDelete/{articleId}")
+    public Result<?> updateArticleDelete(@PathVariable("articleId")Integer articleId){
+        articleService.updateArticleDelete(articleId);
+        return Result.ok();
+    }
+
+
+    /**
+     * 14、保存草稿
+     *
+     * @param articleVO 查询条件
+     * @return {@link Result<?>}
+     * */
+    @PostMapping("/admin/saveDraft")
+    public Result<?> saveDraft(ArticleVO articleVO){
+        articleService.saveDraft(articleVO);
+        return Result.ok();
+    }
 
 
 }

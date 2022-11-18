@@ -2,6 +2,7 @@ package com.chenzhihui.blog.controller;
 
 
 import com.chenzhihui.blog.dto.ArticleDTO;
+import com.chenzhihui.blog.dto.CategoryBackDTO;
 import com.chenzhihui.blog.dto.CategoryDTO;
 import com.chenzhihui.blog.service.CategoryService;
 import com.chenzhihui.blog.vo.PageResult;
@@ -37,6 +38,17 @@ public class CategoryController {
     @GetMapping("/categories/listCategories")
     public Result<PageResult<CategoryDTO>> listCategories() {
         return Result.ok(categoryService.listCategories());
+    }
+
+    /**
+     * 查看后台分类列表
+     *
+     * @return {@link Result<CategoryBackDTO>} 分类列表
+     */
+    @ApiOperation(value = "查看后台分类列表")
+    @GetMapping("/admin/categoryList")
+    public Result<PageResult<CategoryBackDTO>> categoryBackList() {
+        return Result.ok(categoryService.categoryBackList());
     }
 
 

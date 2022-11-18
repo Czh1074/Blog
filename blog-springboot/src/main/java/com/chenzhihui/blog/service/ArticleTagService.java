@@ -2,6 +2,7 @@ package com.chenzhihui.blog.service;
 
 import com.chenzhihui.blog.pojo.ArticleTag;
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.springframework.stereotype.Service;
 
 /**
  * <p>

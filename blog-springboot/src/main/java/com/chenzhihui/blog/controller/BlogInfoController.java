@@ -1,6 +1,7 @@
 package com.chenzhihui.blog.controller;
 
 import com.baomidou.mybatisplus.extension.api.R;
+import com.chenzhihui.blog.dto.BlogBackHomeInfoDTO;
 import com.chenzhihui.blog.dto.BlogHomeInfoDTO;
 import com.chenzhihui.blog.service.BlogInfoService;
 import com.chenzhihui.blog.vo.Result;
@@ -36,7 +37,6 @@ public class BlogInfoController {
     }
 
     /**
-     * todo： 涉及到redis
      * 2、查看关于我信息
      *
      * @return {@link Result<String>} 关于我信息
@@ -57,6 +57,17 @@ public class BlogInfoController {
     public Result<?> report() {
         blogInfoService.report();
         return Result.ok();
+    }
+
+    /**
+     * 4、查询博客后台首页信息
+     *
+     * @retuen {@link Result<>}
+     * */
+    @GetMapping("/admin")
+    public Result<BlogBackHomeInfoDTO> getBlogBackHomeInfo(){
+        System.out.println("访问到我啦-/admin");
+        return Result.ok(blogInfoService.getBlogBackHomeInfo());
     }
 
 }

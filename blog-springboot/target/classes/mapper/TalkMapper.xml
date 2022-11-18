@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chenzhihui.blog.mapper.TalkMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.chenzhihui.blog.pojo.Talk">
+        <id column="talk_id" property="talkId" />
+        <result column="user_id" property="userId" />
+        <result column="content" property="content" />
+        <result column="images" property="images" />
+        <result column="is_top" property="isTop" />
+        <result column="status" property="status" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        talk_id, user_id, content, images, is_top, status, create_time, update_time
+    </sql>
+
+    <select id="listTalks" resultType="com.chenzhihui.blog.dto.TalkDTO">
+        select t.talk_id,ui.nickname,ui.avatar,t.content,t.images,t.is_top,t.create_time
+        from talk t
+        join user_info ui on t.user_id = ui.user_info_id
+        where t.status = 1
+        order by t.is_top desc,t.talk_id desc
+        limit #{limitCurrent},#{size}
+    </select>
+
+    <select id="getTalkById" resultType="com.chenzhihui.blog.dto.TalkDTO" parameterType="Integer">
+        select t.talk_id,ui.nickname,ui.avatar,t.content,t.images,t.is_top,t.create_time
+        from talk t
+        join user_info ui on t.user_id = ui.user_info_id
+        where t.status = 1 and t.talk_id = #{talkId}
+    </select>
+
+</mapper>

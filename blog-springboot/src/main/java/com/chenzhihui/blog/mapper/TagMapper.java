@@ -27,4 +27,5 @@ public interface TagMapper extends BaseMapper<Tag> {
      * @return {@link List<Tag>}
      * */
     List<Tag> getTagListById(Integer articleId);
+
 }

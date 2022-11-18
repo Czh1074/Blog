@@ -1,6 +1,7 @@
 package com.chenzhihui.blog.service;
 
 import com.chenzhihui.blog.dto.ArticleDTO;
+import com.chenzhihui.blog.dto.CategoryBackDTO;
 import com.chenzhihui.blog.dto.CategoryDTO;
 import com.chenzhihui.blog.pojo.Category;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -24,4 +25,10 @@ public interface CategoryService extends IService<Category> {
      */
     PageResult<CategoryDTO> listCategories();
 
+    /**
+     * 查看后台分类列表
+     *
+     * @return {@link Result<CategoryBackDTO>} 后台分类列表
+     */
+    PageResult<CategoryBackDTO> categoryBackList();
 }
