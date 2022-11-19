@@ -1,11 +1,14 @@
 package com.chenzhihui.blog.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 /**
  * 后台分类列表返回类
@@ -22,7 +25,7 @@ public class CategoryBackDTO {
     /**
      * 分类id
      */
-    private Integer id;
+    private Integer categoryId;
 
     /**
      * 分类名称
@@ -37,6 +40,8 @@ public class CategoryBackDTO {
     /**
      * 创建时间
      */
-    private LocalDateTime createTime;
+    @DateTimeFormat(pattern="yyyy-MM-dd")
+    @JsonFormat( pattern = "yyyy-MM-dd")
+    private Date createTime;
 
 }

@@ -23,4 +23,18 @@
         group by c.category_id
     </select>
 
+    <select id="categoryBackList" resultType="com.chenzhihui.blog.dto.CategoryBackDTO" parameterType="com.chenzhihui.blog.vo.CategoryVO">
+        select c.category_id,c.category_name, count(a.article_id)as article_count, c.create_time
+        from category c
+        left join( select article_id,category_id from article where is_delete = 0 and `status` = 1) a
+        on c.category_id = a.category_id
+        <where>
+            <if test="categoryVO.categoryName != null">
+                c.category_name like concat('%',#{categoryVO.categoryName},'%')
+            </if>
+        </where>
+        group by c.category_id
+        limit #{categoryVO.current},10
+    </select>
+
 </mapper>
