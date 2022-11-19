@@ -96,6 +96,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     @Qualifier(TencentCosConfig.COS_IMAGE)
     private COSClient cosClientPicture;
 
+    @Resource
+    private CategoryService categoryService;
+
     /**
      * 1、查询归档文章
      *
@@ -297,8 +300,8 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         CompletableFuture<WebsiteConfigVO> webConfig = CompletableFuture.supplyAsync(()->blogInfoService.getWebsiteConfig());
 
         // 保存文章分类 -> 根据前台信息传回来的信息保存分类信息
+        // todo: 分类修改或保存
         Category category = saveArticleCategory(articleVO);
-
         // 保存或修改文章 -> 相当于前台传回来的articleVO中跟Article有关的信息都赋值给article
         Article article = BeanCopyUtils.copyObject(articleVO,Article.class);
         // 通过保存文章分类 -> 得到分类信息 -> 更新article的categoryId
@@ -343,9 +346,16 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         queryWrapper.eq("category_name",articleVO.getCategoryName());
         Category category = categoryMapper.selectOne(queryWrapper);
         if(!Objects.isNull(category)){
+            // 判断当前在Article中categoryId对应的文章个数
+            Integer count = articleMapper.selectCount(new LambdaQueryWrapper<Article>()
+                    .eq(Article::getCategoryId,articleVO.getCategoryId()));
+            if(count == 1){
+                // 只有一篇
+                categoryMapper.delete(new LambdaQueryWrapper<Category>()
+                        .eq(Category::getCategoryId,articleVO.getCategoryId()));
+            }
             return category;
         }else{
-            categoryMapper.delete(new LambdaQueryWrapper<Category>().eq(Category::getCategoryId,articleVO.getCategoryId()));
             category = Category.builder()
                     .categoryName(articleVO.getCategoryName())
                     .createTime(new Date())

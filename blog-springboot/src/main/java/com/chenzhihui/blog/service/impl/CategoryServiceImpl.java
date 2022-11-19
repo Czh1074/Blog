@@ -59,14 +59,12 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     public PageResult<CategoryBackDTO> categoryBackList(CategoryVO categoryVO) {
         categoryVO.setCurrent((categoryVO.getCurrent()-1)*10);
         Page<Article> page = new Page<>(categoryVO.getCurrent(), PageUtils.getSize());
-        System.out.println("输出current：" + categoryVO.getCurrent());
-        System.out.println("输出keywords： " + categoryVO.getCategoryName());
         List<CategoryBackDTO> categoryBackDTOList = categoryMapper.categoryBackList(categoryVO);
         return new PageResult<>(categoryBackDTOList,categoryBackDTOList.size());
     }
 
     /**
-     * 保存或修改分类标签
+     * 保存或修改分类
      *
      * @param categoryVO 分类信息（分类名称、分类id）
      * @return {@link Result<?>} 正确
@@ -79,10 +77,50 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
             category.setCategoryName(categoryVO.getCategoryName());
             category.setCreateTime(new Date());
             categoryMapper.insert(category);
-        }else{ // 非空，查找category，再修改
-            Category category = categoryMapper.selectById(categoryVO.getCategoryId());
-            category.setCategoryName(categoryVO.getCategoryName());
-            categoryMapper.updateById(category);
+        }else{
+            // 非空，查找category，再修改
+            // 判断要修改的文章类别是否存在
+            Integer nameCount = categoryMapper.selectCount(new LambdaQueryWrapper<Category>()
+                    .eq(Category::getCategoryName,categoryVO.getCategoryName()));
+            if(nameCount == 0){
+                // 意味着修改之后的类别是新类别 -> 判断当前类别是否有其他文章使用 -> 判断是否直接修改其categoryName
+                Integer currentCount = articleMapper.selectCount(new LambdaQueryWrapper<Article>()
+                        .eq(Article::getCategoryId,categoryVO.getCategoryId()));
+                if(currentCount == 1){
+                    // 只有当前文章在使用 -> 直接修改
+                    Category category = categoryMapper.selectById(categoryVO.getCategoryId());
+                    category.setCategoryName(categoryVO.getCategoryName());
+                    categoryMapper.updateById(category);
+                }else{
+                    // 多篇文章使用 -> 加入新的文章类别(新增)
+                    Category category = new Category();
+                    category.setCategoryName(categoryVO.getCategoryName());
+                    category.setCreateTime(new Date());
+                    categoryMapper.insert(category);
+                }
+            }else{
+                // 修改之后为老类别
+                // 那么我们就删除掉现在现在掉类别，让article的categoryId指向查找出来的类别
+                // 判断当前是否有其他文章使用该类别
+                Integer currentCount = articleMapper.selectCount(new LambdaQueryWrapper<Article>()
+                        .eq(Article::getCategoryId,categoryVO.getCategoryId()));
+                if(currentCount == 1){
+                    // 删除旧类别信息
+                    categoryMapper.deleteById(categoryVO.getCategoryId());
+                }
+                // 1、查找老类别的categoryId
+                Integer categoryId = categoryMapper.selectOne(new LambdaQueryWrapper<Category>()
+                        .eq(Category::getCategoryName,categoryVO.getCategoryName())).getCategoryId();
+                // 2、找到当前使用categoryId的文章
+                List<Article> articleList = articleMapper.selectList(new LambdaQueryWrapper<Article>()
+                        .eq(Article::getCategoryId,categoryVO.getCategoryId()));
+                // 3、将相关文章的categoryId修改
+                for(int i = 0; i < articleList.size(); i++){
+                    articleList.get(i).setCategoryId(categoryId);
+                    articleMapper.updateById(articleList.get(i));
+                }
+            }
+
         }
     }
 

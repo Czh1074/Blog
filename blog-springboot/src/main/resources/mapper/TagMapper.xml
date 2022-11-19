@@ -29,5 +29,9 @@
         where a.article_id = #{articleId}
     </select>
 
+    <select id="tagBackList" resultType="com.chenzhihui.blog.dto.TagBackDTO">
+        select
+    </select>
+
 
 </mapper>

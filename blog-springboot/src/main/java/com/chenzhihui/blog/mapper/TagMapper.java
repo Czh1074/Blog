@@ -1,9 +1,11 @@
 package com.chenzhihui.blog.mapper;
 
 import com.chenzhihui.blog.dto.ArticlePreviewDTO;
+import com.chenzhihui.blog.dto.TagBackDTO;
 import com.chenzhihui.blog.pojo.Tag;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.chenzhihui.blog.vo.ConditionVO;
+import com.chenzhihui.blog.vo.TagVO;
 import org.apache.ibatis.annotations.Mapper;
 
 import java.util.List;
@@ -28,4 +30,5 @@ public interface TagMapper extends BaseMapper<Tag> {
      * */
     List<Tag> getTagListById(Integer articleId);
 
+    List<TagBackDTO> tagBackList(TagVO tagVO);
 }

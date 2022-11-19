@@ -1,9 +1,11 @@
 package com.chenzhihui.blog.service;
 
+import com.chenzhihui.blog.dto.TagBackDTO;
 import com.chenzhihui.blog.dto.TagDTO;
 import com.chenzhihui.blog.pojo.Tag;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.chenzhihui.blog.vo.PageResult;
+import com.chenzhihui.blog.vo.TagVO;
 
 import java.util.List;
 
@@ -18,4 +20,6 @@ import java.util.List;
 public interface TagService extends IService<Tag> {
 
     PageResult<TagDTO> listTags();
+
+    PageResult<TagBackDTO> tagBackList(TagVO tagVO);
 }
