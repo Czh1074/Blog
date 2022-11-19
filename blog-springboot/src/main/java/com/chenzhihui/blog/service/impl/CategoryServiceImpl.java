@@ -15,6 +15,7 @@ import com.chenzhihui.blog.util.PageUtils;
 import com.chenzhihui.blog.vo.CategoryVO;
 import com.chenzhihui.blog.vo.PageResult;
 import com.chenzhihui.blog.vo.Result;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -57,10 +58,13 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
      */
     @Override
     public PageResult<CategoryBackDTO> categoryBackList(CategoryVO categoryVO) {
+        // 查询分类数目
+        Integer count = categoryMapper.selectCount(new LambdaQueryWrapper<Category>()
+                .like(StringUtils.isNotBlank(categoryVO.getCategoryName()),Category::getCategoryName,categoryVO.getCategoryName()));
         categoryVO.setCurrent((categoryVO.getCurrent()-1)*10);
         Page<Article> page = new Page<>(categoryVO.getCurrent(), PageUtils.getSize());
         List<CategoryBackDTO> categoryBackDTOList = categoryMapper.categoryBackList(categoryVO);
-        return new PageResult<>(categoryBackDTOList,categoryBackDTOList.size());
+        return new PageResult<>(categoryBackDTOList,count);
     }
 
     /**
@@ -86,7 +90,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
                 // 意味着修改之后的类别是新类别 -> 判断当前类别是否有其他文章使用 -> 判断是否直接修改其categoryName
                 Integer currentCount = articleMapper.selectCount(new LambdaQueryWrapper<Article>()
                         .eq(Article::getCategoryId,categoryVO.getCategoryId()));
-                if(currentCount == 1){
+                if(currentCount <= 1){
                     // 只有当前文章在使用 -> 直接修改
                     Category category = categoryMapper.selectById(categoryVO.getCategoryId());
                     category.setCategoryName(categoryVO.getCategoryName());
@@ -104,7 +108,7 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
                 // 判断当前是否有其他文章使用该类别
                 Integer currentCount = articleMapper.selectCount(new LambdaQueryWrapper<Article>()
                         .eq(Article::getCategoryId,categoryVO.getCategoryId()));
-                if(currentCount == 1){
+                if(currentCount <= 1){
                     // 删除旧类别信息
                     categoryMapper.deleteById(categoryVO.getCategoryId());
                 }

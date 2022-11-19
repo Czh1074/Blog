@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.chenzhihui.blog.config.TencentCosConfig;
 import com.chenzhihui.blog.dto.*;
-import com.chenzhihui.blog.dto.ArticleTopVO;
 import com.chenzhihui.blog.exception.BizException;
 import com.chenzhihui.blog.mapper.ArticleTagMapper;
 import com.chenzhihui.blog.mapper.CategoryMapper;
@@ -298,10 +297,11 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
     public void saveOrUpdateArticle(ArticleVO articleVO) {
         // 查询博客配置信息 => 主要是为了获取文章的默认封面
         CompletableFuture<WebsiteConfigVO> webConfig = CompletableFuture.supplyAsync(()->blogInfoService.getWebsiteConfig());
-
+        System.out.println("输出原有的categoryId" + articleVO.getCategoryId());
         // 保存文章分类 -> 根据前台信息传回来的信息保存分类信息
         // todo: 分类修改或保存
         Category category = saveArticleCategory(articleVO);
+        System.out.println("输出后来的的categoryId：" + category.getCategoryId());
         // 保存或修改文章 -> 相当于前台传回来的articleVO中跟Article有关的信息都赋值给article
         Article article = BeanCopyUtils.copyObject(articleVO,Article.class);
         // 通过保存文章分类 -> 得到分类信息 -> 更新article的categoryId
@@ -328,8 +328,9 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
             articleMapper.insert(article);
         }
         // this.saveOrUpdate(article);
-        // 保存文章标签
-        saveArticleTag(articleVO,article.getArticleId());
+        // 保存文章标签 -> 此时的articleId，如果是新增则为自动生成的id、否则为传过来的原有的id
+        saveArticleTag(articleVO,article);
+        System.out.println("判断articleId 为：" + article.getArticleId());
     }
 
 
@@ -341,16 +342,25 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      */
     private Category saveArticleCategory(ArticleVO articleVO) {
         // 查询是否已经存在
-        // todo 2
         QueryWrapper<Category> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("category_name",articleVO.getCategoryName());
         Category category = categoryMapper.selectOne(queryWrapper);
+        // 判断修改为旧类别
         if(!Objects.isNull(category)){
+            // 判断是否修改
+            String currentName = categoryMapper.selectOne(new LambdaQueryWrapper<Category>()
+                    .eq(Category::getCategoryId,articleVO.getCategoryId())).getCategoryName();
+            System.out.println("currentname：" + currentName + " ， 要修改的name： " + articleVO.getCategoryName());
+            if(currentName.equals(articleVO.getCategoryName())){
+                System.out.println("类别没有进行i修改");
+                return category;
+            }
+            // 修改之后为旧的类别
             // 判断当前在Article中categoryId对应的文章个数
             Integer count = articleMapper.selectCount(new LambdaQueryWrapper<Article>()
                     .eq(Article::getCategoryId,articleVO.getCategoryId()));
-            if(count == 1){
-                // 只有一篇
+            if(count <= 1){
+                // 只有一篇 -> 删除旧的分类信息
                 categoryMapper.delete(new LambdaQueryWrapper<Category>()
                         .eq(Category::getCategoryId,articleVO.getCategoryId()));
             }
@@ -369,50 +379,59 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
      *
      * @param articleVO 文章信息
      */
-    private void saveArticleTag(ArticleVO articleVO, Integer articleId) {
-        // todo： 为什么要删除所有文章标签呢 -> 不然会重复存取
-        // 编辑文章则删除文章所有标签
+    private void saveArticleTag(ArticleVO articleVO, Article article) {
+        // 更新Tag之后的文章类
+        Article newArticle = BeanCopyUtils.copyObject(article,Article.class);
+        // 编辑文章则删除文章所有标签 -> 防止过度存取
         if (Objects.nonNull(articleVO.getArticleId())) {
             // 通过articleId得到articleTagList（主要是要tagId属性）
             List<ArticleTag> articleTagList = articleTagMapper.selectList(new LambdaQueryWrapper<ArticleTag>()
-                    .eq(ArticleTag::getArticleId,articleId));
+                    .eq(ArticleTag::getArticleId,article.getArticleId()));
             for(int i = 0; i < articleTagList.size(); i++){
-                // 删除articleId在ArticleTag类中的记录
-                articleTagMapper.deleteById(articleTagList.get(i).getArticleTagId());
-                // 判断当前tag标签对应的文章数量，如果超过1，则不删除，否则删除
-                Integer tagArticleCount = tagMapper.selectCount(new LambdaQueryWrapper<Tag>()
-                        .eq(Tag::getTagId, articleTagList.get(i).getTagId()));
-                if(tagArticleCount == 1){
+//                // 判断tagId对应的文章个数
+//                Integer count = articleTagMapper.selectCount(new LambdaQueryWrapper<ArticleTag>()
+//                        .eq(ArticleTag::getTagId,articleTagList.get(i).getTagId()));
+                // 删除articleId和tagId在ArticleTag类中的记录
+//                articleTagMapper.deleteById(articleTagList.get(i).getArticleTagId());
+                articleTagMapper.delete(new LambdaQueryWrapper<ArticleTag>()
+                        .eq(ArticleTag::getTagId,articleTagList.get(i).getTagId())
+                        .eq(ArticleTag::getArticleId,article.getArticleId()));
+                // 在ArticleTag表中判断当前tag标签对应的文章数量，如果超过1，则不删除，否则删除
+                Integer tagArticleCount = articleTagMapper.selectCount(new LambdaQueryWrapper<ArticleTag>()
+                        .eq(ArticleTag::getTagId, articleTagList.get(i).getTagId()));
+                if(tagArticleCount < 1){
                     tagMapper.deleteById(articleTagList.get(i).getTagId());
                 }
             }
 
         }
         // 添加文章标签
-        // 获取要添加的标签
         List<String> tagNameList = articleVO.getTagNameList();
-        if(!CollectionUtils.isEmpty(tagNameList)){
-            // 查询现在已经存在的标签
-            QueryWrapper<Tag> queryWrapper = new QueryWrapper<>();
-            queryWrapper.in("tag_name",tagNameList);
-            List<Tag> existTagList = tagService.list(queryWrapper);
-            List<String> existTagNameList = existTagList.stream().map(Tag::getTagName).collect(Collectors.toList());
-            List<Integer> existTagIdList = existTagList.stream().map(Tag::getTagId).collect(Collectors.toList());
-            // 对比新增不存在的标签
-            tagNameList.removeAll(existTagNameList);
-            if(!CollectionUtils.isEmpty(tagNameList)){
-                List<Tag> tagList = tagNameList.stream().map(item -> Tag.builder().tagName(item).build()).collect(Collectors.toList());
-                tagService.saveBatch(tagList);
-                List<Integer> tagIdList = tagList.stream().map(Tag::getTagId).collect(Collectors.toList());
-                existTagIdList.addAll(tagIdList);
+        // 对tagNameList进去去重操作
+        Integer tagId = 0;
+
+        for(int i = 0; i < tagNameList.size(); i++){
+            // 判断当前要插入的标签是否存在
+            Tag tag = tagMapper.selectOne(new LambdaQueryWrapper<Tag>()
+                    .eq(Tag::getTagName,tagNameList.get(i)));
+            if(Objects.isNull(tag)){
+                Tag tag1 = new Tag();
+                // 如果tag为null，则标签不存在 -> 新建tag
+                System.out.println("测试为什么为null" + tagNameList.get(i));
+                tag1.setTagName(tagNameList.get(i));
+                tag1.setCreateTime(new Date());
+                tagMapper.insert(tag1);
+                // 赋值tagId
+                tagId = tagMapper.selectOne(new LambdaQueryWrapper<Tag>()
+                        .eq(Tag::getTagName,tagNameList.get(i))).getTagId();
+            }else{
+                tagId = tag.getTagId();
             }
-            // 提取标签id绑定文章
-            List<ArticleTag> articleTagList = existTagIdList.stream().map(item -> ArticleTag.builder()
-                            .articleId(articleId)
-                            .tagId(item)
-                            .build())
-                    .collect(Collectors.toList());
-            articleTagService.saveBatch(articleTagList);
+            // 通过articleId和tagId，保存article-tag表的记录
+            ArticleTag articleTag = new ArticleTag();
+            articleTag.setArticleId(article.getArticleId());
+            articleTag.setTagId(tagId);
+            articleTagMapper.insert(articleTag);
         }
 
     }
@@ -540,6 +559,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         if(categoryCount == 1){ //如果只有一个，意味着该目录只对应当前文章，故而进行删除操作
             categoryMapper.deleteById(categoryId);
         }
+        // 删除文章
         articleMapper.deleteById(articleId);
         // 删除文章标签信息： 需要查看当前分类是否有其他文章
         // 查找当前articleId对应的tagIdList，再删除
@@ -547,11 +567,13 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
                 .eq(ArticleTag::getArticleId,articleId));
         for(int i = 0; i < articleTagList.size(); i++){ // 赋值为tagIdList
             // 删除articleId在ArticleTag类中的记录
-            articleTagMapper.deleteById(articleTagList.get(i).getArticleTagId());
-            // 判断当前tag标签对应的文章数量，如果超过1，则不删除，否则删除
-            Integer tagArticleCount = tagMapper.selectCount(new LambdaQueryWrapper<Tag>()
-                    .eq(Tag::getTagId, articleTagList.get(i).getTagId()));
-            if(tagArticleCount == 1){
+            articleTagMapper.delete(new LambdaQueryWrapper<ArticleTag>()
+                    .eq(ArticleTag::getArticleId,articleId)
+                    .eq(ArticleTag::getTagId,articleTagList.get(i).getTagId()));
+            // 在ArticleTag表中判断当前tag标签对应的文章数量，如果超过1，则不删除，否则删除
+            Integer tagArticleCount = articleTagMapper.selectCount(new LambdaQueryWrapper<ArticleTag>()
+                    .eq(ArticleTag::getTagId, articleTagList.get(i).getTagId()));
+            if(tagArticleCount < 1){
                 tagMapper.deleteById(articleTagList.get(i).getTagId());
             }
         }

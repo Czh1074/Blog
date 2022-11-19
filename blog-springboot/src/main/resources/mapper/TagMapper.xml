@@ -30,7 +30,18 @@
     </select>
 
     <select id="tagBackList" resultType="com.chenzhihui.blog.dto.TagBackDTO">
-        select
+        select t.tag_id, t.tag_name, COUNT(at.tag_id) as article_count, t.create_time
+        from tag t
+        left join article_tag at
+        on t.tag_id = at.tag_id
+       <where>
+           <if test="tagVO.tagName != null">
+               t.tag_name like concat('%',#{tagVO.tagName},'%')
+           </if>
+       </where>
+        group by t.tag_id
+        order by t.tag_id desc
+        limit #{tagVO.current},10
     </select>
 
 
