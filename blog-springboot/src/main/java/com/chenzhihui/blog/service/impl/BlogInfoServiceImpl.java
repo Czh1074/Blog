@@ -18,8 +18,10 @@ import com.chenzhihui.blog.service.RedisService;
 import com.chenzhihui.blog.service.UserInfoService;
 import com.chenzhihui.blog.util.BeanCopyUtils;
 import com.chenzhihui.blog.vo.PageVO;
+import com.chenzhihui.blog.vo.Result;
 import com.chenzhihui.blog.vo.WebsiteConfigVO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -63,15 +65,10 @@ public class BlogInfoServiceImpl implements BlogInfoService {
     @Override
     public BlogHomeInfoDTO getBlogHomeInfo() {
         // 查询文章信息
-        // todo 4
         QueryWrapper<Article> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("status",PUBLIC.getStatus());
         queryWrapper.eq("is_delete",FALSE);
         Integer articleCount = articleMapper.selectCount(queryWrapper);
-//        Integer articleCount = articleMapper.selectCount(new LambdaQueryWrapper<Article>()
-//                .eq(Article::getStatus, PUBLIC.getStatus())
-//                .eq(Article::getIsDelete, FALSE)
-//        );
         // 查询分类信息(selectCount 参数为null时，返回id不同的个数)
         Integer categoryCount = categoryMapper.selectCount(null);
         // 查询标签数量
@@ -110,22 +107,27 @@ public class BlogInfoServiceImpl implements BlogInfoService {
     // 关于的撰写
     @Override
     public String getAbout() {
-        return "###  关于我\n" +
-                "\n" +
-                "- 一个碌碌无为的躺平研一学生\n" +
-                "- 在学习全栈Java的路上......\n" +
-                "\n" +
-                "> 为什么要学习Java\n" +
-                ">\n" +
-                "> \u200B\t从大一到大四毕业，整个大学生涯好像什么都做了，又好像什么都没做，专业能录不够\n" +
-                ">\n" +
-                "> \u200B\t22年考上研究生，虽然都在说互联网寒冬，也确实是，还是希望自己能静下心来，在这三年好好沉淀自己！而Java是最喜欢的语言，所以脚踏实地的去学习就好！\n" +
-                "\n" +
-                "###  关于本站\n" +
-                "\n" +
-                "- 从github上看到的这个项目，也满足自己一直想拥有个人博客的一个执念\n" +
-                "- 该博客主要是参考hexo中的butterfly主题\n" +
-                "- 仅以此来记录自己的编程生涯";
+        Object about = redisService.get(ABOUT);
+        if(about == ""){
+            redisService.set(ABOUT,"###  关于我\n" +
+                    "\n" +
+                    "- 一个碌碌无为的躺平研一学生\n" +
+                    "- 在学习全栈Java的路上......\n" +
+                    "\n" +
+                    "> 为什么要学习Java\n" +
+                    ">\n" +
+                    "> \u200B\t从大一到大四毕业，整个大学生涯好像什么都做了，又好像什么都没做，专业能录不够\n" +
+                    ">\n" +
+                    "> \u200B\t22年考上研究生，虽然都在说互联网寒冬，也确实是，还是希望自己能静下心来，在这三年好好沉淀自己！而Java是最喜欢的语言，所以脚踏实地的去学习就好！\n" +
+                    "\n" +
+                    "###  关于本站\n" +
+                    "\n" +
+                    "- 从github上看到的这个项目，也满足自己一直想拥有个人博客的一个执念\n" +
+                    "- 该博客主要是参考hexo中的butterfly主题\n" +
+                    "- 仅以此来记录自己的编程生涯");
+        }
+        return redisService.get(ABOUT).toString();
+
     }
 
     /**
@@ -133,7 +135,6 @@ public class BlogInfoServiceImpl implements BlogInfoService {
      */
     @Override
     public void report() {
-
     }
 
 
@@ -146,10 +147,55 @@ public class BlogInfoServiceImpl implements BlogInfoService {
     }
 
     /***
+     * 返回博客后台-管理系统信息（网站配置信息）
+     */
+    @Override
+    public WebsiteConfigVO getBlogBackHomeInfo() {
+        WebsiteConfigVO websiteConfigVO;
+        // 获取缓存数据
+        Object websiteConfig = redisService.get(WEBSITE_CONFIG);
+        if (websiteConfig == "") {
+            // 证明有缓存
+            System.out.println("走缓存,输出当前的websiteConfig ：" + websiteConfig);
+            websiteConfigVO = JSON.parseObject(websiteConfig.toString(),WebsiteConfigVO.class);
+        } else {
+            // 从数据库中加载
+            System.out.println("从数据库中存取");
+            String config = websiteConfigMapper.selectById(DEFAULT_CONFIG_ID).getConfig();
+            websiteConfigVO = JSON.parseObject(config, WebsiteConfigVO.class);
+            redisService.set(WEBSITE_CONFIG,config);
+        }
+        return  websiteConfigVO;
+    }
+
+    @Override
+    public void updateWebsiteConfig(WebsiteConfigVO websiteConfigVO) {
+        // 修改网站配置
+        WebsiteConfig websiteConfig = WebsiteConfig.builder()
+                .configId(1)
+                .config(JSON.toJSONString(websiteConfigVO))
+                .build();
+        websiteConfigMapper.updateById(websiteConfig);
+        // 删除缓存
+        redisService.del(WEBSITE_CONFIG);
+    }
+
+    @Override
+    public void updateAbout(String aboutContent) {
+        // 因为关于我存在于redis中
+        redisService.set(ABOUT,aboutContent);
+    }
+
+    /**
+     * 查看博客信息后台管理系统首页信息
+     *
+     * @return {@link Result <BlogBackHomeInfoDTO>} 博客信息
+     */
+    /***
      * 返回博客后台管理系统首页信息
      */
     @Override
-    public BlogBackHomeInfoDTO getBlogBackHomeInfo() {
+    public BlogBackHomeInfoDTO getBlogBackHome() {
         // 访问量
         String viewCount = String.valueOf(redisService.get(BLOG_VIEWS_COUNT));
         // 用户量

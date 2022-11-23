@@ -6,8 +6,8 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+
+import lombok.*;
 import lombok.experimental.Accessors;
 
 /**
@@ -19,6 +19,9 @@ import lombok.experimental.Accessors;
  * @since 2022-10-19
  */
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = false)
 @Accessors(chain = true)
 public class WebsiteConfig implements Serializable {

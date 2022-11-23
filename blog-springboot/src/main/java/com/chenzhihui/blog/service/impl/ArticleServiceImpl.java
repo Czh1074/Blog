@@ -509,6 +509,7 @@ public class ArticleServiceImpl extends ServiceImpl<ArticleMapper, Article> impl
         return articleVO;
     }
 
+    // 添加文件-图片
     @Override
     public String getUploadFileTencentCosUrl(MultipartFile multipartFile) {
         File localFile = null;

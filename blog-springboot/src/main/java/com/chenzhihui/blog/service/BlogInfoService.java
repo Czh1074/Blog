@@ -40,5 +40,16 @@ public interface BlogInfoService {
      *
      * @return {@link Result <BlogHomeInfoDTO>} 博客信息
      */
-    BlogBackHomeInfoDTO getBlogBackHomeInfo();
+    WebsiteConfigVO getBlogBackHomeInfo();
+
+    void updateWebsiteConfig(WebsiteConfigVO websiteConfigVO);
+
+    void updateAbout(String aboutContent);
+
+    /**
+     * 查看博客信息后台管理系统首页信息
+     *
+     * @return {@link Result<BlogBackHomeInfoDTO>} 博客信息
+     */
+    BlogBackHomeInfoDTO getBlogBackHome();
 }

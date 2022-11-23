@@ -185,7 +185,6 @@ public class ArticleController {
     @ApiOperation("上传文件到腾讯云的cos中并返回url")
     public Result<String> getUploadFile2TencentCosUrl(@RequestParam("file") MultipartFile multipartFile) throws BizException {
         return Result.ok(articleService.getUploadFileTencentCosUrl(multipartFile));
-
     }
 
     /**
