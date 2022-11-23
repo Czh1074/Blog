@@ -78,15 +78,20 @@ public class UserAuthController {
     /**
      * 用户登录
      *
-     * @param username,password 用户信息
+     * @param userVO用户信息
      * @return {@link Result<>}
      */
     @PostMapping("/admin/login")
-    public Result<?> login(@PathParam("username") String username, @PathParam("password") String password){
+    public Result<?> login(@RequestBody UserVO userVO){
         Map<String, Object> map = new HashMap<>();
-        System.out.println("我被调用到了！！");
-        map.put("token","admin-token-a");
-        return Result.ok(map);
+        System.out.println("我被调用到了！！ + username" + userVO.getUsername() + "  password ：" + userVO.getPassword());
+        Integer loginStatus = userAuthService.check(userVO);
+        if(loginStatus == 1){
+            map.put("token","admin-token-a");
+            return Result.ok(map);
+        }else{
+            return Result.fail();
+        }
     }
 
     @GetMapping("/admin/info")

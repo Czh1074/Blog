@@ -172,5 +172,23 @@ public class UserAuthServiceImpl extends ServiceImpl<UserAuthMapper, UserAuth> i
                 .eq(UserAuth::getUsername, user.getUsername()));
     }
 
+    /**
+     * 判断是否登录成功
+     *
+     * @param userVO 用户信息
+     * @return {@link Integer}
+     */
+    @Override
+    public Integer check(UserVO userVO) {
+        UserAuth userAuth =  userAuthMapper.selectOne(new LambdaQueryWrapper<UserAuth>()
+                .eq(UserAuth::getUsername,userVO.getUsername())
+                .eq(UserAuth::getPassword,userVO.getPassword()));
+        if(Objects.isNull(userAuth)){
+            return 0;
+        }else{
+            return 1;
+        }
+    }
+
 
 }

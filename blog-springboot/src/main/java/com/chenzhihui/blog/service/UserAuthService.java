@@ -40,4 +40,6 @@ public interface UserAuthService extends IService<UserAuth> {
      * @return {@link Result<>}
      */
     void updatePassword(UserVO user);
+
+    Integer check(UserVO userVO);
 }
